@@ -1,5 +1,5 @@
 function CardServiceRouter(router, csCtrl) {
-  router.route('/cardService/transaction').post(csCtrl.SaveTransaction);
+  router.route('/cardservice/transaction').post(csCtrl.SaveTransaction);
 
   return router;
 }

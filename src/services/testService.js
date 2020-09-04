@@ -1,6 +1,6 @@
 const http = require('http');
 
-function HelloTessService() {
+function TestService() {
   function checkError(code) {
     switch (code) {
       case 500:
@@ -27,8 +27,9 @@ function HelloTessService() {
       });
 
       const options = {
-        hostname: 'gwn.staging.hellotess.com',
-        path: '/cardServices/loadExternalData',
+        hostname: 'localhost',
+        port: '4001',
+        path: '/error',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -45,10 +46,10 @@ function HelloTessService() {
       });
 
       req.on('error', (error) => {
-        reject(error);
+        console.log(error);
+        reject();
       });
 
-      console.log(data);
       req.write(data);
       req.end();
 
@@ -61,4 +62,4 @@ function HelloTessService() {
   return { SaveTransaction };
 }
 
-module.exports = HelloTessService;
+module.exports = TestService;

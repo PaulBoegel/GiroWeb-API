@@ -1,3 +1,4 @@
+const TestService = require('./services/testService');
 const HelloTessService = require('./services/helloTessService');
 
 function GirowebServiceFactory() {
@@ -5,6 +6,8 @@ function GirowebServiceFactory() {
     switch (key) {
       case 'HelloTess':
         return new HelloTessService();
+      case 'Test':
+        return new TestService();
       default:
         return null;
     }

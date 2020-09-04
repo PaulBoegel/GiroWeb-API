@@ -1,11 +1,15 @@
 function CardServiceController(serviceAPI) {
   async function SaveTransaction(req, res) {
     try {
-      const { serviceKey, transaction } = req.body;
-      await serviceAPI.SaveTransaction(serviceKey, transaction);
-      res.sendStatus(202);
+      const { serviceKey, machineID, transaction } = req.body;
+      const response = await serviceAPI.SaveTransaction(
+        serviceKey,
+        machineID,
+        transaction
+      );
+      res.send(response);
     } catch (err) {
-      res.sendStatus(500);
+      res.sendStatus(err.message);
     }
   }
 

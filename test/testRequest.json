@@ -1,0 +1,19 @@
+{
+  "serviceKey": "HelloTess",
+  "transaction": {
+    "machineId": 201,
+    "date": "04.09.2020",
+    "time": "16:20:05",
+    "type": "loading",
+    "paymentType": "cash",
+    "number": 0,
+    "cardId": 6580,
+    "pricelist": 1,
+    "usergroup": 2,
+    "subusergroup": 2,
+    "saldoBefore": 60,
+    "saldoAfter": 2060,
+    "amount": 1500,
+    "transactionCounter": 15
+  }
+}

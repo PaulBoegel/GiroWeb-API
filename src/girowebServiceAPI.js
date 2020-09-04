@@ -3,9 +3,14 @@ const GirowebServiceFactory = require('./girowebServiceFactory');
 function GirowebServiceAPI() {
   const factory = GirowebServiceFactory();
 
-  function SaveTransaction(serviceKey, transaction) {
+  async function SaveTransaction(serviceKey, machineID, transaction) {
     const service = factory.CreateService(serviceKey);
-    service.SaveTransaction(transaction);
+    if (service === undefined) {
+      throw new Error(500);
+    }
+    const response = await service.SaveTransaction(machineID, transaction);
+
+    return response;
   }
 
   return { SaveTransaction };

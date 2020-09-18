@@ -17,8 +17,8 @@ function HelloTessService() {
         name: 'audit',
         version: '1.0',
         machineId: machineID,
-        "date": transaction.date,
-        "time": transaction.time,
+        date: transaction.date,
+        time: transaction.time,
       };
 
       const data = JSON.stringify({

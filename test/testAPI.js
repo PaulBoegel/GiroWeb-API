@@ -3,6 +3,14 @@ const server = require('http').createServer();
 server.on('request', (req, res) => {
   console.log(req.url);
   switch (req.url) {
+    case '/success':
+      res.writeHeader(200);
+      res.end('success');
+      break;
+    case '/logicError':
+      res.writeHeader(200);
+      res.end('error');
+      break;
     case '/timeout':
       setTimeout(() => {
         res.writeHeader(200);

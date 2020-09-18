@@ -22,7 +22,7 @@ function HelloTessService() {
       const data = JSON.stringify({
         header: headerTmp,
         body: {
-          transactions: [transaction],
+          transactions: [transaction]
         },
       });
 

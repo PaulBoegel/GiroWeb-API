@@ -29,7 +29,7 @@ function TestService() {
       const options = {
         hostname: 'localhost',
         port: '4001',
-        path: '/error',
+        path: '/logicError',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

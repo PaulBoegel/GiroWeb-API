@@ -4,7 +4,7 @@ const cors = require('cors');
 const CardServiceController = require('./controller/cardServiceController');
 const CardServiceRouter = require('./router/cardServiceRouter');
 
-function GirowebRestAPI(gwServiceAPI) {
+function GirowebRestAPI(serviceFactory) {
   const app = express();
   const port = process.env.PORT || 3000;
 
@@ -13,7 +13,8 @@ function GirowebRestAPI(gwServiceAPI) {
   app.use(bodyParser.json());
 
   function InitCardServices() {
-    const cardServiceController = new CardServiceController(gwServiceAPI);
+
+    const cardServiceController = new CardServiceController(serviceFactory);
     const cardServiceRouter = new CardServiceRouter(
       express.Router(),
       cardServiceController

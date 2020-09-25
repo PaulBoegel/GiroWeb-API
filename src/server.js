@@ -1,7 +1,7 @@
-const GirowebServiceAPI = require('./girowebServiceAPI');
 const GirowebRestAPI = require('./girowebRestAPI');
+const GirowebServiceFactory = require('./girowebServiceFactory');
 
-const gwServiceAPI = new GirowebServiceAPI();
-const gwRestAPI = new GirowebRestAPI(gwServiceAPI);
+const gwServiceFactory = new GirowebServiceFactory();
+const gwRestAPI = new GirowebRestAPI(gwServiceFactory);
 
 gwRestAPI.Start();

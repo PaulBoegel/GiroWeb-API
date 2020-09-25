@@ -47,7 +47,7 @@ function TestService() {
 
       req.on('error', (error) => {
         console.log(error);
-        reject();
+        reject(error);
       });
 
       req.write(data);

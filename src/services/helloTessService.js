@@ -60,7 +60,25 @@ function HelloTessService() {
     });
   }
 
-  return { SaveTransaction };
+  function SaveCashQuantities(machineID, quantities){
+    return new Promise((resolve, reject) => {
+      const headerTmp = {
+        type: 'data',
+        name: 'audit',
+        version: '1.0',
+        machineId: machineID,
+        date: quantities.date,
+        time: quantities.time,
+      };
+
+      console.log(quantities);
+      resolve(true);
+    });
+  }
+
+
+
+  return { SaveTransaction, SaveCashQuantities };
 }
 
 module.exports = HelloTessService;

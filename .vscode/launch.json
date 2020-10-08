@@ -51,6 +51,18 @@
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "program": "${workspaceFolder}/test/repos/cashQuantityRepoHarness.js"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "transaction repo - test",
+      "runtimeExecutable": "nodemon",
+      "runtimeArgs": ["--inspect"],
+      "skipFiles": ["<node_internals>/**"],
+      "restart": true,
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "program": "${workspaceFolder}/test/repos/transRepoHarness.js"
     }
   ]
 }

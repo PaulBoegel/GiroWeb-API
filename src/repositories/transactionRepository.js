@@ -49,7 +49,19 @@ function TransactionRepository(dbConfig) {
       .updateOne(keys, { $set: { ...data } }, { upsert: true });
   }
 
-  return { connect, get, add };
+  async function update(transaction, updateData) {
+    const { serviceKey, machineID, date, time } = transaction;
+    const keys = {
+      serviceKey,
+      machineID,
+      date,
+      time,
+    };
+
+    await db.collection('transactions').updateOne(keys, { $set: updateData });
+  }
+
+  return { connect, get, add, update };
 }
 
 module.exports = TransactionRepository;

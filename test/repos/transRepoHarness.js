@@ -23,8 +23,15 @@ async function main() {
       serviceKey: transaction.serviceKey,
       transactionCounter: transaction.transactionCounter,
     };
+
     const filterData = await transRepo.get(query);
-    assert.strictEqual(filterData[0].transactionCounter, 43);
+    assert.strictEqual(filterData[0].transactionCounter, 15);
+
+    // update transaction
+    const updateData = { send: true };
+    await transRepo.update(transaction, updateData);
+    const updatedTransaction = await transRepo.get(query);
+    assert.strictEqual(updatedTransaction[0].send, true);
   } catch (err) {
     console.log(err);
   } finally {
@@ -33,7 +40,7 @@ async function main() {
 
     const admin = client.db(dbName).admin();
 
-    // await client.db(dbName).dropDatabase();
+    await client.db(dbName).dropDatabase();
     console.log('\n - TransactionRepo - Success');
     client.close();
   }

@@ -1,0 +1,14 @@
+{
+    "prod": {
+        "host": "localhost",
+        "port": "",
+        "dbName": "gwServiceDB_Prod",
+        "poolSize": "100"    
+    },
+    "test": {
+        "host": "localhost",
+        "port": "",
+        "dbName": "gwServiceDB_Tests",
+        "poolSize": "100"
+    }
+}

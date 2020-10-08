@@ -1,6 +1,7 @@
 const http = require('http');
+const TransactionRepository = require('../repositories/transactionRepository');
 
-function HelloTessService() {
+function HelloTessService(dbConfig) {
   function checkError(code) {
     switch (code) {
       case 500:
@@ -10,21 +11,28 @@ function HelloTessService() {
     }
   }
 
-  function SaveTransaction(machineID, transaction) {
+  async function SaveTransaction(machineID, transaction) {
+    const transRepo = new TransactionRepository(dbConfig);
+    await transRepo.connect();
+    await transRepo.add(transaction);
+    return 200;
+  }
+
+  function SaveCashQuantities(machineID, quantities) {
     return new Promise((resolve, reject) => {
       const headerTmp = {
         type: 'data',
         name: 'audit',
         version: '1.0',
         machineId: machineID,
-        date: transaction.date,
-        time: transaction.time,
+        date: quantities.date,
+        time: quantities.time,
       };
 
       const data = JSON.stringify({
         header: headerTmp,
         body: {
-          transactions: [transaction]
+          // transactions: [transaction]
         },
       });
 
@@ -59,24 +67,6 @@ function HelloTessService() {
       }, 5000);
     });
   }
-
-  function SaveCashQuantities(machineID, quantities){
-    return new Promise((resolve, reject) => {
-      const headerTmp = {
-        type: 'data',
-        name: 'audit',
-        version: '1.0',
-        machineId: machineID,
-        date: quantities.date,
-        time: quantities.time,
-      };
-
-      console.log(quantities);
-      resolve(true);
-    });
-  }
-
-
 
   return { SaveTransaction, SaveCashQuantities };
 }

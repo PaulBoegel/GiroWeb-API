@@ -1,6 +1,5 @@
 function CardServiceController(serviceFactory) {
-
-  function GetService(serviceKey){
+  function GetService(serviceKey) {
     const service = serviceFactory.CreateService(serviceKey);
     if (service === undefined) {
       throw new Error(500);
@@ -10,31 +9,27 @@ function CardServiceController(serviceFactory) {
 
   async function SaveTransaction(req, res) {
     try {
-      const { serviceKey, machineID, transaction } = req.body;
-      const response = await GetService(serviceKey).SaveTransaction(
-        machineID,
-        transaction
-      );
+      const { serviceKey } = req.body;
+      const response = await GetService(serviceKey).SaveTransaction(req.body);
       res.send(response);
     } catch (err) {
       res.sendStatus(err.message);
     }
   }
 
-  async function SaveCashQuantities(req, res) {
+  async function SendCashQuantities(req, res) {
     try {
-      const { serviceKey, machineID, cashQuantities } = req.body;
-      const response = await GetService(serviceKey).SaveCashQuantities(
-        machineID,
-        cashQuantities
-      );
+      const cashQuantities = req.body;
+      const response = await GetService(
+        cashQuantities.serviceKey
+      ).SendCashQuantities(cashQuantities);
       res.send(response);
-    } catch(err){
+    } catch (err) {
       res.sendStatus(err.message);
     }
   }
 
-  return { SaveTransaction, SaveCashQuantities };
+  return { SaveTransaction, SendCashQuantities };
 }
 
 module.exports = CardServiceController;

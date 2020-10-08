@@ -1,7 +1,6 @@
 const server = require('http').createServer();
 
 server.on('request', (req, res) => {
-  console.log(req.url);
   switch (req.url) {
     case '/success':
       res.writeHeader(200);
@@ -21,11 +20,24 @@ server.on('request', (req, res) => {
       res.writeHeader(500);
       res.end('Internal Server Error');
       break;
+    case '/cashQuantities':
+      res.writeHeader(200);
+      break;
     default:
       res.writeHeader(404);
       res.end();
       break;
   }
+
+  let body = [];
+  req.on('data', (chunk) => {
+    body.push(chunk);
+  }).on('end', () => {
+    body = Buffer.concat(body).toString();
+    res.setHeader = {'Content-Type': 'application/json'}
+    res.write(body);
+    res.end(body);
+  })
 });
 
 server.listen(4001);

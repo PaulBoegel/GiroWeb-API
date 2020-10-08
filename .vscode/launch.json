@@ -7,7 +7,7 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Launch via nodemon",
+      "name": "server",
       "runtimeExecutable": "nodemon",
       "runtimeArgs": ["--inspect"],
       "skipFiles": ["<node_internals>/**"],
@@ -15,6 +15,42 @@
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "program": "${workspaceFolder}/src/server.js"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test API",
+      "runtimeExecutable": "nodemon",
+      "runtimeArgs": ["--inspect"],
+      "skipFiles": ["<node_internals>/**"],
+      "restart": true,
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "program": "${workspaceFolder}/test/testAPI.js"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "trans repo - test",
+      "runtimeExecutable": "nodemon",
+      "runtimeArgs": ["--inspect"],
+      "skipFiles": ["<node_internals>/**"],
+      "restart": true,
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "program": "${workspaceFolder}/test/repos/transRepoHarness.js"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "cash quantity repo - test",
+      "runtimeExecutable": "nodemon",
+      "runtimeArgs": ["--inspect"],
+      "skipFiles": ["<node_internals>/**"],
+      "restart": true,
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "program": "${workspaceFolder}/test/repos/cashQuantityRepoHarness.js"
     }
   ]
 }

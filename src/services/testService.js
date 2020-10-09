@@ -14,6 +14,14 @@ function TestService(dbConfig) {
     }
   }
 
+  async function SetSendStatus(transactions, machineID, serviceKey) {
+    await cashQuantityRepo.connect();
+    transactions.forEach(async (transaction) => {
+      const updateTransaction = { machineID, serviceKey, ...transaction };
+      await transRepo.update(updateTransaction, { send: true });
+    });
+  }
+
   async function SaveTransaction(transaction) {
     const tmpTransaction = transaction;
     tmpTransaction.send = false;
@@ -40,7 +48,14 @@ function TestService(dbConfig) {
   async function SendCashQuantities(newQuantitieData) {
     try {
       await SaveCashQuantities(newQuantitieData);
-      const { machineID, date, time, cashQuantities } = newQuantitieData;
+      const {
+        machineID,
+        serviceKey,
+        date,
+        time,
+        cashQuantities,
+      } = newQuantitieData;
+
       const transactions = await GetOpenTransactions(machineID);
 
       return new Promise((resolve, reject) => {
@@ -72,11 +87,12 @@ function TestService(dbConfig) {
         };
 
         const req = http.request(options, (res) => {
-          res.on('data', (respData) => {
+          res.on('data', async (respData) => {
             if (checkError(res.statusCode)) {
               reject(new Error(res.statusCode));
               return;
             }
+            await SetSendStatus(transactions, machineID, serviceKey);
             resolve(respData.toString());
           });
         });

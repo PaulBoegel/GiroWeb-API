@@ -39,7 +39,7 @@ function CashQuantityRepository(dbConfig) {
   async function add(newCashQuantity) {
     const key = {
       serviceKey: newCashQuantity.serviceKey,
-      machineID: newCashQuantity.machineID,
+      machineId: newCashQuantity.machineId,
     };
 
     await db.collection('cashQuantities').updateOne(

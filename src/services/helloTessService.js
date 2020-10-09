@@ -14,10 +14,10 @@ function HelloTessService(dbConfig) {
     }
   }
 
-  async function SetSendStatus(transactions, machineID, serviceKey) {
+  async function SetSendStatus(transactions, machineId, serviceKey) {
     await cashQuantityRepo.connect();
     transactions.forEach(async (transaction) => {
-      const updateTransaction = { machineID, serviceKey, ...transaction };
+      const updateTransaction = { machineId, serviceKey, ...transaction };
       await transRepo.update(updateTransaction, { send: true });
     });
   }
@@ -36,36 +36,30 @@ function HelloTessService(dbConfig) {
     return 200;
   }
 
-  async function GetOpenTransactions(machineID) {
+  async function GetOpenTransactions(machineId) {
     await transRepo.connect();
     const openTransactions = await transRepo.get(
-      { machineID, send: false },
-      { _id: 0, machineID: 0, serviceKey: 0 }
+      { machineId, send: false },
+      { _id: 0, machineId: 0, serviceKey: 0, send: 0 }
     );
     return openTransactions;
   }
 
   async function SendCashQuantities(newQuantitieData) {
     try {
-      const {
-        machineID,
-        serviceKey,
-        date,
-        time,
-        cashQuantities,
-      } = newQuantitieData;
+      const { machineId, serviceKey, cashQuantities } = newQuantitieData;
 
       await SaveCashQuantities(newQuantitieData);
-      const transactions = await GetOpenTransactions(machineID);
+      const transactions = await GetOpenTransactions(machineId);
 
       return new Promise((resolve, reject) => {
         const headerTmp = {
           type: 'data',
           name: 'audit',
           version: '1.0',
-          machineID,
-          date,
-          time,
+          machineId,
+          date: cashQuantities[0].date,
+          time: cashQuantities[0].time,
         };
 
         const data = JSON.stringify({
@@ -85,13 +79,15 @@ function HelloTessService(dbConfig) {
           },
         };
 
+        console.log(data);
+
         const req = http.request(options, (res) => {
           res.on('data', async (respData) => {
             if (checkError(res.statusCode)) {
               reject(new Error(res.statusCode));
               return;
             }
-            await SetSendStatus(transactions, machineID, serviceKey);
+            await SetSendStatus(transactions, machineId, serviceKey);
             resolve(respData.toString());
           });
         });

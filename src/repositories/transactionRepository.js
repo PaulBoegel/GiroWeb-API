@@ -37,10 +37,10 @@ function TransactionRepository(dbConfig) {
   }
 
   async function add(newTransaction) {
-    const { serviceKey, machineID, date, time, ...data } = newTransaction;
+    const { serviceKey, machineId, date, time, ...data } = newTransaction;
     const keys = {
       serviceKey,
-      machineID,
+      machineId,
       date,
       time,
     };
@@ -50,10 +50,10 @@ function TransactionRepository(dbConfig) {
   }
 
   async function update(transaction, updateData) {
-    const { serviceKey, machineID, date, time } = transaction;
+    const { serviceKey, machineId, date, time } = transaction;
     const keys = {
       serviceKey,
-      machineID,
+      machineId,
       date,
       time,
     };

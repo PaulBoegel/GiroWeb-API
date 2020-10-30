@@ -1,4 +1,10 @@
 function CardServiceController(serviceFactory) {
+  function GetErrorCode(error) {
+    let code = parseInt(error.message, 10);
+    if (Number.isNaN(code)) code = 500;
+    return code;
+  }
+
   function GetService(serviceKey) {
     const service = serviceFactory.CreateService(serviceKey);
     if (service === undefined) {
@@ -10,22 +16,24 @@ function CardServiceController(serviceFactory) {
   async function SaveTransaction(req, res) {
     try {
       const { serviceKey } = req.body;
-      const response = await GetService(serviceKey).SaveTransaction(req.body);
-      res.send(response);
+      await GetService(serviceKey).SaveTransaction(req.body);
+      res.send(200);
     } catch (err) {
-      res.sendStatus(err.message);
+      const code = GetErrorCode(err);
+      res.sendStatus(GetErrorCode(code));
     }
   }
 
   async function SendCashQuantities(req, res) {
     try {
       const cashQuantities = req.body;
-      const response = await GetService(
-        cashQuantities.serviceKey
-      ).SendCashQuantities(cashQuantities);
-      res.send(response);
+      await GetService(cashQuantities.serviceKey).SendCashQuantities(
+        cashQuantities
+      );
+      res.send(200);
     } catch (err) {
-      res.sendStatus(err.message);
+      const code = GetErrorCode(err);
+      res.sendStatus(GetErrorCode(code));
     }
   }
 

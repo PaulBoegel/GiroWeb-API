@@ -5,14 +5,6 @@ const CashQuantityRepository = require('../repositories/cashQuantityRepository')
 function HelloTessService(dbConfig) {
   const transRepo = new TransactionRepository(dbConfig);
   const cashQuantityRepo = new CashQuantityRepository(dbConfig);
-  function checkError(code) {
-    switch (code) {
-      case 500:
-        return true;
-      default:
-        return false;
-    }
-  }
 
   async function SetSendStatus(transactions, machineId, serviceKey) {
     await cashQuantityRepo.connect();
@@ -45,50 +37,68 @@ function HelloTessService(dbConfig) {
     return openTransactions;
   }
 
+  function prepareCashQuantitieJsonObj(
+    machineId,
+    date,
+    time,
+    transactions,
+    cashQuantities
+  ) {
+    const headerTmp = {
+      type: 'data',
+      name: 'audit',
+      version: '1.0',
+      machineId,
+      date: time,
+      time: date,
+    };
+
+    return JSON.stringify({
+      header: headerTmp,
+      body: {
+        transactions,
+        cashQuantities,
+      },
+    });
+  }
+
+  function prepareCashQuantitieOptions() {
+    return {
+      hostname: 'gwn.staging.hellotess.com',
+      path: '/cardServices/loadExternalData',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    };
+  }
+
   async function SendCashQuantities(newQuantitieData) {
     try {
-      const { machineId, serviceKey, cashQuantities } = newQuantitieData;
-
       await SaveCashQuantities(newQuantitieData);
+      const { machineId, serviceKey, cashQuantities } = newQuantitieData;
+      const time = newQuantitieData.cashQuantities[0].date;
+      const date = newQuantitieData.cashQuantities[0].time;
       const transactions = await GetOpenTransactions(machineId);
+      const options = prepareCashQuantitieOptions();
+      const data = prepareCashQuantitieJsonObj(
+        machineId,
+        date,
+        time,
+        transactions,
+        cashQuantities
+      );
 
       return new Promise((resolve, reject) => {
-        const headerTmp = {
-          type: 'data',
-          name: 'audit',
-          version: '1.0',
-          machineId,
-          date: cashQuantities[0].date,
-          time: cashQuantities[0].time,
-        };
-
-        const data = JSON.stringify({
-          header: headerTmp,
-          body: {
-            transactions,
-            cashQuantities,
-          },
-        });
-
-        const options = {
-          hostname: 'gwn.staging.hellotess.com',
-          path: '/cardServices/loadExternalData',
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        };
-
         console.log(data);
 
         const req = http.request(options, (res) => {
           res.on('data', async (respData) => {
-            if (checkError(res.statusCode)) {
-              reject(new Error(res.statusCode));
-              return;
+            if (res.statusCode === 200) {
+              await SetSendStatus(transactions, machineId, serviceKey);
+              resolve(respData.toString());
             }
-            await SetSendStatus(transactions, machineId, serviceKey);
-            resolve(respData.toString());
+            reject(new Error(res.statusCode));
           });
         });
 

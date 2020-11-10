@@ -46,7 +46,7 @@ function CashQuantityRepository(dbConfig) {
       key,
       {
         $addToSet: {
-          cashQuantities: { $each: newCashQuantity.cashQuantities },
+          cashQuantities: { $each: [newCashQuantity.cashQuantities] },
         },
       },
       { upsert: true }

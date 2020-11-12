@@ -1,10 +1,6 @@
 const http = require('http');
-const TransactionRepository = require('../repositories/transactionRepository');
-const CashQuantityRepository = require('../repositories/cashQuantityRepository');
 
-function TestService(dbConfig) {
-  const transRepo = new TransactionRepository(dbConfig);
-  const cashQuantityRepo = new CashQuantityRepository(dbConfig);
+function TestService({transRepo, cashQuantityRepo}) {
 
   async function SetSendStatus(transactions, machineId, serviceKey) {
     await cashQuantityRepo.connect();

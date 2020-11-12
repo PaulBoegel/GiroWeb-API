@@ -1,7 +1,7 @@
 {
   "serviceKey": "Test",
   "machineId": 100,
-  "cashQuantities": {
+  "cashQuantities": [{
     "date": "23.09.2020",
     "time": "22:11:33",
     "type": "bill assumption",
@@ -39,5 +39,5 @@
         "total": 0
       }
     ]
-  }
+  }]
 }

@@ -12,7 +12,7 @@
     "subusergroup": 2,
     "saldoBefore": 60,
     "saldoAfter": 2060,
-    "amount": 1500,
+    "amount": 500,
     "send": false,
     "transactionCounter": 15
 }

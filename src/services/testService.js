@@ -70,6 +70,21 @@ function TestService({transRepo, cashQuantityRepo}) {
     };
   }
 
+  function ExtractBillStock(transactions){
+    const values = [500, 1000, 2000, 5000]
+    const billStock = values.map(value => {
+      let quantity = 0;
+      transactions.forEach(trans => {quantity += trans.amount === value ? 1 : 0})
+      return {
+        value,
+        quantity, 
+        total: quantity * value
+      }
+    })
+
+    return billStock;
+  }
+
   async function SendCashQuantities(newQuantitieData) {
     try {
       await SaveCashQuantities(newQuantitieData);
@@ -97,8 +112,6 @@ function TestService({transRepo, cashQuantityRepo}) {
           });
         });
 
-        console.log(data);
-
         req.on('error', (error) => {
           reject(error);
         });
@@ -116,7 +129,7 @@ function TestService({transRepo, cashQuantityRepo}) {
     }
   }
 
-  return { SaveTransaction, SendCashQuantities };
+  return { SaveTransaction, SendCashQuantities, SaveCashQuantities, ExtractBillStock };
 }
 
 module.exports = TestService;

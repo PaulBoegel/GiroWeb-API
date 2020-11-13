@@ -83,7 +83,7 @@ function HelloTessService({transRepo, cashQuantityRepo, billStockRepo}) {
     return {
     date,
     time,
-    type: "bill stock",
+    type: "bill assumption",
     paymentType: "cash",
     total: getResult[0].total,
     detail: getResult[0 ].detail
@@ -94,21 +94,22 @@ function HelloTessService({transRepo, cashQuantityRepo, billStockRepo}) {
     try {
       await SaveCashQuantities(newQuantitieData);
       const { machineId, serviceKey, cashQuantities } = newQuantitieData;
+      const transactions = await GetOpenTransactions(machineId);
       const time = newQuantitieData.cashQuantities[0].date;
       const date = newQuantitieData.cashQuantities[0].time;
-      const transactions = await GetOpenTransactions(machineId);
+      cashQuantities.push(await PrepareBillStock({serviceKey, machineId, date, time}))
       const options = prepareCashQuantitieOptions();
       const data = prepareCashQuantitieJsonObj(
         machineId,
-        date,
         time,
+        date,
         transactions,
         cashQuantities
       );
 
-      return new Promise((resolve, reject) => {
-        console.log(data);
+      console.log(data);
 
+      return new Promise((resolve, reject) => {
         const req = http.request(options, (res) => {
           res.on('data', async (respData) => {
             if (res.statusCode === 200) {

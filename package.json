@@ -7,7 +7,7 @@
     "start": "nodemon ./src/server.js",
     "test": "mocha -w",
     "start:test-api": "nodemon ./test/testAPI.js",
-    "test:transrepo": "nodemon test/repos/transRepoHarness.js"
+    "test:repos": "mocha -w ./test/repos/"
   },
   "keywords": [],
   "author": "",

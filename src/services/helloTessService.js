@@ -2,9 +2,7 @@ const http = require('http');
 const TransactionRepository = require('../repositories/transactionRepository');
 const CashQuantityRepository = require('../repositories/cashQuantityRepository');
 
-function HelloTessService(dbConfig) {
-  const transRepo = new TransactionRepository(dbConfig);
-  const cashQuantityRepo = new CashQuantityRepository(dbConfig);
+function HelloTessService({transRepo, cashQuantityRepo, billStockRepo}) {
 
   async function SetSendStatus(transactions, machineId, serviceKey) {
     await cashQuantityRepo.connect();
@@ -12,6 +10,13 @@ function HelloTessService(dbConfig) {
       const updateTransaction = { machineId, serviceKey, ...transaction };
       await transRepo.update(updateTransaction, { send: true });
     });
+  }
+
+  async function SaveBillStock(transaction){
+    if(transaction.paymentType !== "cash") return;
+    const {serviceKey, machineId, amount} = transaction;
+    await billStockRepo.connect();
+    await billStockRepo.add({serviceKey, machineId, value: amount}); 
   }
 
   async function SaveTransaction(transaction) {
@@ -73,6 +78,19 @@ function HelloTessService(dbConfig) {
     };
   }
 
+  async function PrepareBillStock({serviceKey, machineId, date, time}){
+    await billStockRepo.connect()
+    const getResult = await billStockRepo.get({serviceKey, machineId}, {_id: 0, detail: 1, total: 1});
+    return {
+    date,
+    time,
+    type: "bill stock",
+    paymentType: "cash",
+    total: getResult[0].total,
+    detail: getResult[0 ].detail
+    }
+  }
+
   async function SendCashQuantities(newQuantitieData) {
     try {
       await SaveCashQuantities(newQuantitieData);
@@ -119,7 +137,7 @@ function HelloTessService(dbConfig) {
     }
   }
 
-  return { SaveTransaction, SendCashQuantities };
+  return { SaveTransaction, SendCashQuantities, SaveCashQuantities, SaveBillStock, PrepareBillStock };
 }
 
 module.exports = HelloTessService;

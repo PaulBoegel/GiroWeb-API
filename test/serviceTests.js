@@ -44,35 +44,31 @@ describe('TestService sendCashQuantities', () => {
   })
 });
 
-describe("TestService ExtractBillStok", () => {
+describe("TestService SaveBillStock", () => {
   let service;
   beforeEach(() => {
     service = TestService({});
   })
-  it("should return an array", () => {
-    const billStok = service.ExtractBillStock([transactionMock]);
-    assert.strictEqual(Array.isArray(billStok), true);
-  });
-  it("should return a stock entry for 500, 1000, 2000 and 5000", () => {
-    const billStok = service.ExtractBillStock([transactionMock]);
-    const five = billStok.find((stock) => stock.value === 500);
-    assert.strictEqual(typeof five === "object", true);
-    const ten = billStok.find((stock) => stock.value === 1000);
-    assert.strictEqual(typeof ten === "object", true);
-    const twenty = billStok.find((stock) => stock.value === 2000);
-    assert.strictEqual(typeof twenty === "object", true);
-    const fifty = billStok.find((stock) => stock.value === 5000);
-    assert.strictEqual(typeof fifty === "object", true);
-  })
-  it("should extract the transaction values and increment the stock entrys", () => {
-    const transactionCount = Math.floor((Math.random() * 10) + 1);
-    const transactions = [];
-    for(let index = 0; index < transactionCount; index+=1){
-      transactions.push(transactionMock);
-    }
-    const billStock = service.ExtractBillStock(transactions);
-    const five = billStock.find(stock => stock.value === 500);
-    assert.strictEqual(five.quantity, transactions.length);
-    assert.strictEqual(five.total, transactions.length * 500);
-  })
+  
 })
+
+describe("TestService PrepareBillStock", () => {
+  let service;
+  let date;
+  let time;
+  let billStockDetails;
+  beforeEach(() => {
+    date = quantityMock.cashQuantities[0].date;
+    time = quantityMock.cashQuantities[0].time;
+    service = TestService({});
+    billStockDetails = quantityMock.cashQuantities[0].detail;
+  })
+  it("should return bill stock details", () => {
+    const billStock = service.PrepareBillStock({date, time, billStockDetails});
+    assert.strictEqual(billStock.detail, billStockDetails);
+  })
+  it("should return bill stock total", () => {
+    const billStock = service.PrepareBillStock({date, time, billStockDetails});
+    assert.strictEqual(billStock.total, 4500);
+  })
+});

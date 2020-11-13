@@ -1,6 +1,4 @@
 const http = require('http');
-const TransactionRepository = require('../repositories/transactionRepository');
-const CashQuantityRepository = require('../repositories/cashQuantityRepository');
 
 function HelloTessService({transRepo, cashQuantityRepo, billStockRepo}) {
 
@@ -24,6 +22,7 @@ function HelloTessService({transRepo, cashQuantityRepo, billStockRepo}) {
     tmpTransaction.send = false;
     await transRepo.connect();
     await transRepo.add(tmpTransaction);
+    await SaveBillStock(tmpTransaction);
     return 200;
   }
 

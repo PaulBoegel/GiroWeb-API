@@ -5,11 +5,11 @@ const CashQuantityRepository = require('./repositories/cashQuantityRepository');
 const BillStockRepository = require('./repositories/billStockRepository');
 
 function GirowebServiceFactory(dbConfig) {
-  const transRepo = TransactionRepository(dbConfig);
-  const cashQuantityRepo = CashQuantityRepository(dbConfig);
-  const billStockRepo = BillStockRepository(dbConfig);
-
+  
   function CreateService(key) {
+    const transRepo = TransactionRepository(dbConfig);
+    const cashQuantityRepo = CashQuantityRepository(dbConfig);
+    const billStockRepo = BillStockRepository(dbConfig);
     const params = {transRepo, cashQuantityRepo, billStockRepo}
     switch (key) {
       case 'HelloTess':

@@ -1,13 +1,18 @@
 const http = require('http');
 
-function HelloTessService({transRepo, cashQuantityRepo, billAssumtionRepo}) {
+function HelloTessService({transRepo, billStockRepo, billAssumtionRepo, billTakingRepo}) {
 
-  async function SetSendStatus(transactions, machineId, serviceKey) {
-    await cashQuantityRepo.connect();
+  async function SetSendStatus(transactions, billTaking, machineId, serviceKey) {
+    await transRepo.connect();
     transactions.forEach(async (transaction) => {
       const updateTransaction = { machineId, serviceKey, ...transaction };
       await transRepo.update(updateTransaction, { send: true });
     });
+    billTaking.cashQuantities.forEach(quantity => {
+      quantity.send = false;
+    })
+    await billTakingRepo.connect();
+    await billTakingRepo.updateQuantities({machineId, serviceKey, cashQuantities: billTaking.cashQuantities});
   }
 
   async function SaveBillAssumtion(transaction){
@@ -15,6 +20,14 @@ function HelloTessService({transRepo, cashQuantityRepo, billAssumtionRepo}) {
     const {serviceKey, machineId, amount} = transaction;
     await billAssumtionRepo.connect();
     await billAssumtionRepo.add({serviceKey, machineId, value: amount}); 
+  }
+
+  async function SaveBillTaking(billTaking){
+    const {serviceKey, machineId, cashQuantities} = billTaking
+    const tmpQuantities = cashQuantities.map(quantity => { return {...quantity, send: false}});
+    await billTakingRepo.connect();
+    await billTakingRepo.add({serviceKey, machineId, cashQuantities: tmpQuantities})
+    return 200
   }
 
   async function SaveTransaction(transaction) {
@@ -26,9 +39,9 @@ function HelloTessService({transRepo, cashQuantityRepo, billAssumtionRepo}) {
     return 200;
   }
 
-  async function SaveCashQuantities(quantity) {
-    await cashQuantityRepo.connect();
-    await cashQuantityRepo.add(quantity);
+  async function SaveBillStock(billStock) {
+    await billStockRepo.connect();
+    await billStockRepo.add(billStock);
     return 200;
   }
 
@@ -36,7 +49,7 @@ function HelloTessService({transRepo, cashQuantityRepo, billAssumtionRepo}) {
     await transRepo.connect();
     const openTransactions = await transRepo.get(
       { machineId, send: false },
-      { _id: 0, machineId: 0, serviceKey: 0, send: 0 }
+      { _id: 0, machineId: 0, serviceKey: 0 }
     );
     return openTransactions;
   }
@@ -68,8 +81,9 @@ function HelloTessService({transRepo, cashQuantityRepo, billAssumtionRepo}) {
 
   function prepareCashQuantitieOptions() {
     return {
-      hostname: 'gwn.staging.hellotess.com',
-      path: '/cardServices/loadExternalData',
+      hostname: 'localhost',
+      port: 4001,
+      path: '/cashQuantities',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -80,23 +94,27 @@ function HelloTessService({transRepo, cashQuantityRepo, billAssumtionRepo}) {
   async function PrepareBillAssumtion({serviceKey, machineId, date, time}){
     await billAssumtionRepo.connect()
     const getResult = await billAssumtionRepo.get({serviceKey, machineId}, {_id: 0, detail: 1, total: 1});
+    if(getResult.length === 0) return undefined;
     return {
     date,
     time,
-    type: "bill assumption",
+    type: "bill assumtion",
     paymentType: "cash",
     total: getResult[0].total,
     detail: getResult[0 ].detail
     }
   }
 
-  async function SendCashQuantities(newQuantitieData) {
+  async function SendCashQuantities(newBillStock) {
     try {
-      await SaveCashQuantities(newQuantitieData);
-      const { machineId, serviceKey, cashQuantities } = newQuantitieData;
+      await SaveBillStock(newBillStock);
+      const { machineId, serviceKey, cashQuantities } = newBillStock;
       const transactions = await GetOpenTransactions(machineId);
-      const time = newQuantitieData.cashQuantities[0].date;
-      const date = newQuantitieData.cashQuantities[0].time;
+      const time = newBillStock.cashQuantities[0].date;
+      const date = newBillStock.cashQuantities[0].time;
+      await billTakingRepo.connect();
+      const [billTaking] = await billTakingRepo.get({serviceKey, machineId, "cashQuantities.send": false}, {_id: 0, "cashQuantities.$": 1})  
+      cashQuantities.push(billTaking.cashQuantities);
       cashQuantities.push(await PrepareBillAssumtion({serviceKey, machineId, date, time}))
       const options = prepareCashQuantitieOptions();
       const data = prepareCashQuantitieJsonObj(
@@ -107,13 +125,13 @@ function HelloTessService({transRepo, cashQuantityRepo, billAssumtionRepo}) {
         cashQuantities
       );
 
-      console.log(data);
+        console.log(data);
 
       return new Promise((resolve, reject) => {
         const req = http.request(options, (res) => {
           res.on('data', async (respData) => {
             if (res.statusCode === 200) {
-              await SetSendStatus(transactions, machineId, serviceKey);
+              await SetSendStatus(transactions, billTaking, machineId, serviceKey);
               resolve(respData.toString());
             }
             reject(new Error(res.statusCode));
@@ -137,7 +155,7 @@ function HelloTessService({transRepo, cashQuantityRepo, billAssumtionRepo}) {
     }
   }
 
-  return { SaveTransaction, SendCashQuantities, SaveCashQuantities, SaveBillAssumtion, PrepareBillAssumtion };
+  return { SaveTransaction, SendCashQuantities, SaveBillStock, SaveBillAssumtion, SaveBillTaking, PrepareBillAssumtion };
 }
 
 module.exports = HelloTessService;

@@ -1,13 +1,18 @@
 const http = require('http');
 
-function TestService({transRepo, billStockRepo, billAssumtionRepo}) {
+function TestService({transRepo, billStockRepo, billAssumtionRepo, billTakingRepo}) {
 
-  async function SetSendStatus(transactions, machineId, serviceKey) {
+  async function SetSendStatus(transactions, billTaking, machineId, serviceKey) {
     await transRepo.connect();
     transactions.forEach(async (transaction) => {
       const updateTransaction = { machineId, serviceKey, ...transaction };
       await transRepo.update(updateTransaction, { send: true });
     });
+    billTaking.cashQuantities.forEach(quantity => {
+      quantity.send = false;
+    })
+    await billTakingRepo.connect();
+    await billTakingRepo.updateQuantities({machineId, serviceKey, cashQuantities: billTaking.cashQuantities});
   }
 
   async function SaveBillAssumtion(transaction){
@@ -15,6 +20,14 @@ function TestService({transRepo, billStockRepo, billAssumtionRepo}) {
     const {serviceKey, machineId, amount} = transaction;
     await billAssumtionRepo.connect();
     await billAssumtionRepo.add({serviceKey, machineId, value: amount}); 
+  }
+
+  async function SaveBillTaking(billTaking){
+    const {serviceKey, machineId, cashQuantities} = billTaking
+    const tmpQuantities = cashQuantities.map(quantity => { return {...quantity, send: false}});
+    await billTakingRepo.connect();
+    await billTakingRepo.add({serviceKey, machineId, cashQuantities: tmpQuantities})
+    return 200
   }
 
   async function SaveTransaction(transaction) {
@@ -81,6 +94,7 @@ function TestService({transRepo, billStockRepo, billAssumtionRepo}) {
   async function PrepareBillAssumtion({serviceKey, machineId, date, time}){
     await billAssumtionRepo.connect()
     const getResult = await billAssumtionRepo.get({serviceKey, machineId}, {_id: 0, detail: 1, total: 1});
+    if(getResult.length === 0) return undefined;
     return {
     date,
     time,
@@ -98,6 +112,9 @@ function TestService({transRepo, billStockRepo, billAssumtionRepo}) {
       const transactions = await GetOpenTransactions(machineId);
       const time = newBillStock.cashQuantities[0].date;
       const date = newBillStock.cashQuantities[0].time;
+      await billTakingRepo.connect();
+      const [billTaking] = await billTakingRepo.get({serviceKey, machineId, "cashQuantities.send": false}, {_id: 0, "cashQuantities.$": 1})  
+      cashQuantities.push(billTaking.cashQuantities);
       cashQuantities.push(await PrepareBillAssumtion({serviceKey, machineId, date, time}))
       const options = prepareCashQuantitieOptions();
       const data = prepareCashQuantitieJsonObj(
@@ -114,7 +131,7 @@ function TestService({transRepo, billStockRepo, billAssumtionRepo}) {
         const req = http.request(options, (res) => {
           res.on('data', async (respData) => {
             if (res.statusCode === 200) {
-              await SetSendStatus(transactions, machineId, serviceKey);
+              await SetSendStatus(transactions, billTaking, machineId, serviceKey);
               resolve(respData.toString());
             }
             reject(new Error(res.statusCode));
@@ -138,7 +155,7 @@ function TestService({transRepo, billStockRepo, billAssumtionRepo}) {
     }
   }
 
-  return { SaveTransaction, SendCashQuantities, SaveBillStock, SaveBillAssumtion, PrepareBillAssumtion };
+  return { SaveTransaction, SendCashQuantities, SaveBillStock, SaveBillAssumtion, SaveBillTaking, PrepareBillAssumtion };
 }
 
 module.exports = TestService;

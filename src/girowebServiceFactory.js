@@ -1,16 +1,16 @@
 const TestService = require('./services/testService');
 const HelloTessService = require('./services/helloTessService');
 const TransactionRepository = require('./repositories/transactionRepository');
-const CashQuantityRepository = require('./repositories/cashQuantityRepository');
 const BillStockRepository = require('./repositories/billStockRepository');
+const BillAssumtionRepository = require('./repositories/billAssumtionRepository');
 
 function GirowebServiceFactory(dbConfig) {
   
   function CreateService(key) {
     const transRepo = TransactionRepository(dbConfig);
-    const cashQuantityRepo = CashQuantityRepository(dbConfig);
     const billStockRepo = BillStockRepository(dbConfig);
-    const params = {transRepo, cashQuantityRepo, billStockRepo}
+    const billAssumtionRepo = BillAssumtionRepository(dbConfig);
+    const params = {transRepo, billStockRepo, billAssumtionRepo}
     switch (key) {
       case 'HelloTess':
         return new HelloTessService(params);

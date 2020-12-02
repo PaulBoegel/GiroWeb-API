@@ -1,6 +1,6 @@
 const http = require('http');
 
-function HelloTessService({transRepo, cashQuantityRepo, billStockRepo}) {
+function HelloTessService({transRepo, cashQuantityRepo, billAssumtionRepo}) {
 
   async function SetSendStatus(transactions, machineId, serviceKey) {
     await cashQuantityRepo.connect();
@@ -10,11 +10,11 @@ function HelloTessService({transRepo, cashQuantityRepo, billStockRepo}) {
     });
   }
 
-  async function SaveBillStock(transaction){
+  async function SaveBillAssumtion(transaction){
     if(transaction.paymentType !== "cash") return;
     const {serviceKey, machineId, amount} = transaction;
-    await billStockRepo.connect();
-    await billStockRepo.add({serviceKey, machineId, value: amount}); 
+    await billAssumtionRepo.connect();
+    await billAssumtionRepo.add({serviceKey, machineId, value: amount}); 
   }
 
   async function SaveTransaction(transaction) {
@@ -22,7 +22,7 @@ function HelloTessService({transRepo, cashQuantityRepo, billStockRepo}) {
     tmpTransaction.send = false;
     await transRepo.connect();
     await transRepo.add(tmpTransaction);
-    await SaveBillStock(tmpTransaction);
+    await SaveBillAssumtion(tmpTransaction);
     return 200;
   }
 
@@ -77,9 +77,9 @@ function HelloTessService({transRepo, cashQuantityRepo, billStockRepo}) {
     };
   }
 
-  async function PrepareBillStock({serviceKey, machineId, date, time}){
-    await billStockRepo.connect()
-    const getResult = await billStockRepo.get({serviceKey, machineId}, {_id: 0, detail: 1, total: 1});
+  async function PrepareBillAssumtion({serviceKey, machineId, date, time}){
+    await billAssumtionRepo.connect()
+    const getResult = await billAssumtionRepo.get({serviceKey, machineId}, {_id: 0, detail: 1, total: 1});
     return {
     date,
     time,
@@ -97,7 +97,7 @@ function HelloTessService({transRepo, cashQuantityRepo, billStockRepo}) {
       const transactions = await GetOpenTransactions(machineId);
       const time = newQuantitieData.cashQuantities[0].date;
       const date = newQuantitieData.cashQuantities[0].time;
-      cashQuantities.push(await PrepareBillStock({serviceKey, machineId, date, time}))
+      cashQuantities.push(await PrepareBillAssumtion({serviceKey, machineId, date, time}))
       const options = prepareCashQuantitieOptions();
       const data = prepareCashQuantitieJsonObj(
         machineId,
@@ -137,7 +137,7 @@ function HelloTessService({transRepo, cashQuantityRepo, billStockRepo}) {
     }
   }
 
-  return { SaveTransaction, SendCashQuantities, SaveCashQuantities, SaveBillStock, PrepareBillStock };
+  return { SaveTransaction, SendCashQuantities, SaveCashQuantities, SaveBillAssumtion, PrepareBillAssumtion };
 }
 
 module.exports = HelloTessService;

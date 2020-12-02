@@ -22,42 +22,38 @@ function BillStockRepository(dbConfig) {
     });
   }
 
-  async function create({serviceKey, machineId}){
-    const values = [500, 1000, 2000, 5000];
-    const result = await db.collection('billStock').insert({
-      serviceKey,
-      machineId,
-      total: 0,
-      detail: values.map(value => {return {value, quantity: 0, total:0}})
-    });
-    return result.nInserted;
+  async function get(query, projection, limit) {
+    let result = db
+      .collection('billStock')
+      .find(query, { fields: projection });
+
+    if (limit > 0) {
+      result = result.limit(limit);
+    }
+
+    result = await result.toArray();
+
+    return result;
   }
 
-  async function add({serviceKey, machineId, value}) {
+  async function add(newBillStock) {
     const key = {
-        serviceKey,
-        machineId,
+      serviceKey: newBillStock.serviceKey,
+      machineId: newBillStock.machineId,
     };
-    const exists = await db.collection('billStock').find({serviceKey, machineId}).count();
-    if(exists === 0) await create(key);
-    const result = await db.collection('billStock').updateOne({
-    serviceKey,
-    machineId,
-    "detail.value": value 
-  },{
-    $inc: {total: value, "detail.$.quantity": 1, "detail.$.total": value},
-  },
-    { upsert: true }
+
+    await db.collection('billStock').updateOne(
+      key,
+      {
+        $addToSet: {
+          cashQuantities: { $each: newBillStock.cashQuantities },
+        },
+      },
+      { upsert: true }
     );
-    return result.matchedCount;
   }
 
-  async function get(query, projection){
-    const result = await db.collection('billStock').find(query).project(projection);
-    return result.toArray();
-  }
-
-  return {connect, create, add, get}
+  return { connect, get, add };
 }
 
-module.exports = BillStockRepository
+module.exports = BillStockRepository;

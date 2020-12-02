@@ -36,17 +36,17 @@ function BillStockRepository(dbConfig) {
     return result;
   }
 
-  async function add(newBillStock) {
+  async function add({serviceKey, machineId, cashQuantities}) {
     const key = {
-      serviceKey: newBillStock.serviceKey,
-      machineId: newBillStock.machineId,
+      serviceKey,
+      machineId
     };
 
     await db.collection('billStock').updateOne(
       key,
       {
         $addToSet: {
-          cashQuantities: { $each: newBillStock.cashQuantities },
+          cashQuantities: { $each: cashQuantities },
         },
       },
       { upsert: true }

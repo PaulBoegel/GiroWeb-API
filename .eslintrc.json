@@ -11,6 +11,7 @@
     "sourceType": "module"
   },
   "rules": {
+    "prettier/prettier": ["error"],
     "no-unused-vars": "warn",
     "no-param-reassign": 0
   }

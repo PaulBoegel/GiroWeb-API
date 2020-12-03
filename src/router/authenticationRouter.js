@@ -1,6 +1,6 @@
 function AuthenticationRouter(router, authCtrl) {
   router.route('/authentication').post(authCtrl.Authentication);
-  router.route('/authentication-test').post(authCtrl.AuthenticationTest);
+  router.route('/refresh-token').post(authCtrl.RefreshToken);
 
   return router;
 }

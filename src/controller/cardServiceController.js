@@ -24,12 +24,12 @@ function CardServiceController(serviceFactory) {
     }
   }
 
-  async function SaveBillTaking(req, res){
+  async function SaveBillTaking(req, res) {
     try {
       const { serviceKey } = req.body;
       await GetService(serviceKey).SaveBillTaking(req.body);
       res.send(200);
-    } catch(err){
+    } catch (err) {
       const code = GetErrorCode(err);
       res.sendStatus(GetErrorCode(code));
     }

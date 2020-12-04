@@ -17,16 +17,6 @@ function AuthenticationController({ jwt, authRepository }) {
     return jwt.sign({ machineId }, process.env.REFRESH_TOKEN_SECRET);
   }
 
-  async function updateTokenPare(machine) {
-    const { machineId } = machine;
-    const accessToken = generateAccessToken(machine);
-    const refreshToken = generateRefreshToken(machine);
-    await authRepository.connect();
-    const result = await authRepository.update({ machineId, refreshToken });
-    if (result.matchedCount == 0) throw new Error('500');
-    return { accessToken, refreshToken };
-  }
-
   async function Authentication(req, res) {
     try {
       const { machineId, authKey } = req.body;
@@ -36,8 +26,11 @@ function AuthenticationController({ jwt, authRepository }) {
         { _id: 0, authKey: 1 }
       );
       if (authKey === result.authKey) {
-        const tokens = await updateTokenPare({ machineId, authKey });
-        return await res.send(tokens);
+        const accessToken = generateAccessToken({ machineId, authKey });
+        const refreshToken = generateRefreshToken({ machineId, authKey });
+        const result = await authRepository.update({ machineId, refreshToken });
+        if (result.matchedCount == 0) throw new Error('500');
+        return await res.send({ accessToken, refreshToken });
       }
       res.sendStatus(403);
     } catch (err) {
@@ -58,8 +51,8 @@ function AuthenticationController({ jwt, authRepository }) {
         process.env.REFRESH_TOKEN_SECRET,
         async (err, machine) => {
           if (err) return res.sendStatus(403);
-          const tokens = await updateTokenPare(machine);
-          return res.send(tokens);
+          const accessToken = generateAccessToken(machine);
+          return res.send({ token: accessToken });
         }
       );
     } catch (err) {

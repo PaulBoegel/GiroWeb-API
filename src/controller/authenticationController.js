@@ -25,7 +25,7 @@ function AuthenticationController({ jwt, authRepository }) {
         { machineId, authKey },
         { _id: 0, authKey: 1 }
       );
-      if (authKey === result.authKey) {
+      if (result && authKey === result.authKey) {
         const accessToken = generateAccessToken({ machineId, authKey });
         const refreshToken = generateRefreshToken({ machineId, authKey });
         const result = await authRepository.update({ machineId, refreshToken });

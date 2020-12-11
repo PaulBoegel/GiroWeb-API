@@ -3,8 +3,8 @@ function CardServiceRouter(router, auth, csCtrl) {
     .route('/cardservice/transaction')
     .post(auth.AuthenticateToken, csCtrl.SaveTransaction);
   router
-    .route('/cardservice/bill-taken')
-    .post(auth.AuthenticateToken, csCtrl.SaveBillTaking);
+    .route('/cardservice/bill-taking')
+    .post(auth.AuthenticateToken, csCtrl.SendBillTaking);
   router
     .route('/cardservice/cash-quantities')
     .post(auth.AuthenticateToken, csCtrl.SendCashQuantities);

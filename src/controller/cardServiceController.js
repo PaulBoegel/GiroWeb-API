@@ -24,10 +24,10 @@ function CardServiceController(serviceFactory) {
     }
   }
 
-  async function SaveBillTaking(req, res) {
+  async function SendBillTaking(req, res) {
     try {
       const { serviceKey } = req.body;
-      await GetService(serviceKey).SaveBillTaking(req.body);
+      await GetService(serviceKey).SendBillTaking(req.body);
       res.send(200);
     } catch (err) {
       const code = GetErrorCode(err);
@@ -48,7 +48,7 @@ function CardServiceController(serviceFactory) {
     }
   }
 
-  return { SaveTransaction, SaveBillTaking, SendCashQuantities };
+  return { SaveTransaction, SendBillTaking, SendCashQuantities };
 }
 
 module.exports = CardServiceController;

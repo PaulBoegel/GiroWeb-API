@@ -1,5 +1,5 @@
 const http = require('http');
-const https = rquire('https');
+const https = require('https');
 require;
 
 function HelloTess({

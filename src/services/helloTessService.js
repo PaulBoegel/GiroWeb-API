@@ -1,4 +1,5 @@
 const http = require('http');
+require;
 
 function HelloTess({
   transRepo,
@@ -129,7 +130,7 @@ function HelloTess({
 
   function prepareCashQuantitieOptions() {
     return {
-      hostname: 'gwn.staging.hellotess.com',
+      hostname: process.env.HELLO_TESS_URL,
       // port: 4001,
       path: '/cardServices/loadExternalData',
       method: 'POST',

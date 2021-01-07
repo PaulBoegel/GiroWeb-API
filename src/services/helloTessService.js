@@ -1,4 +1,5 @@
 const http = require('http');
+const https = rquire('https');
 require;
 
 function HelloTess({
@@ -157,6 +158,54 @@ function HelloTess({
     };
   }
 
+  function sendHttps({ data, options }) {
+    return new Promise((resolve, reject) => {
+      const req = https.request(options, (res) => {
+        res.on('data', async (respData) => {
+          if (res.statusCode === 200) {
+            resolve(respData.toString());
+          }
+          reject(new Error(res.statusCode));
+        });
+      });
+
+      req.on('error', (error) => {
+        reject(error);
+      });
+
+      req.write(data);
+      req.end();
+
+      setTimeout(() => {
+        reject(new Error(408));
+      }, 5000);
+    });
+  }
+
+  function sendHttp({ data, options }) {
+    return new Promise((resolve, reject) => {
+      const req = http.request(options, (res) => {
+        res.on('data', async (respData) => {
+          if (res.statusCode === 200) {
+            resolve(respData.toString());
+          }
+          reject(new Error(res.statusCode));
+        });
+      });
+
+      req.on('error', (error) => {
+        reject(error);
+      });
+
+      req.write(data);
+      req.end();
+
+      setTimeout(() => {
+        reject(new Error(408));
+      }, 5000);
+    });
+  }
+
   async function SendCashQuantities(newBillStock) {
     try {
       await SaveBillStock(newBillStock);
@@ -165,11 +214,6 @@ function HelloTess({
       const time = newBillStock.cashQuantities[0].date;
       const date = newBillStock.cashQuantities[0].time;
       await billTakingRepo.connect();
-      // const [billTaking] = await billTakingRepo.get(
-      //   { serviceKey, machineId, 'cashQuantities.send': false },
-      //   { _id: 0, 'cashQuantities.$': 1 }
-      // );
-      //if (billTaking) cashQuantities.push(billTaking.cashQuantities);
       cashQuantities.push(
         await PrepareBillAssumtion({ serviceKey, machineId, date, time })
       );
@@ -184,28 +228,14 @@ function HelloTess({
 
       console.log(data);
 
-      return new Promise((resolve, reject) => {
-        const req = http.request(options, (res) => {
-          res.on('data', async (respData) => {
-            if (res.statusCode === 200) {
-              await SetSendStatus(transactions, machineId, serviceKey);
-              resolve(respData.toString());
-            }
-            reject(new Error(res.statusCode));
-          });
-        });
-
-        req.on('error', (error) => {
-          reject(error);
-        });
-
-        req.write(data);
-        req.end();
-
-        setTimeout(() => {
-          reject(new Error(408));
-        }, 5000);
-      });
+      if (process.env.HELLO_TESS_HTTPS) {
+        const response = await sendHttps({ data, options });
+        await SetSendStatus(transactions, machineId, serviceKey);
+        return response;
+      }
+      const response = await sendHttp({ data, options });
+      await SetSendStatus(transactions, machineId, serviceKey);
+      return response;
     } catch (error) {
       console.log(error);
       throw new Error(500);

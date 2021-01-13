@@ -5,8 +5,9 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon ./src/server.js",
-    "test": "mocha -w",
     "start:test-api": "nodemon ./test/testAPI.js",
+    "test": "mocha -w",
+    "test:hellotess": "mocha -w ./test/helloTess/",
     "test:repos": "mocha -w ./test/repos/"
   },
   "keywords": [],
@@ -22,6 +23,8 @@
   },
   "devDependencies": {
     "assert": "^2.0.0",
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
     "eslint": "^7.8.1",
     "eslint-config-airbnb-base": "^14.2.0",
     "eslint-config-node": "^4.1.0",

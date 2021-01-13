@@ -228,7 +228,8 @@ function HelloTess({
 
       console.log(data);
 
-      if (process.env.HELLO_TESS_HTTPS) {
+      const isHttps = JSON.parse(process.env.HELLO_TESS_HTTPS);
+      if (isHttps) {
         const response = await sendHttps({ data, options });
         await SetSendStatus(transactions, machineId, serviceKey);
         return response;

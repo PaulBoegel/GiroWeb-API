@@ -54,27 +54,13 @@ function HelloTess({
 
       console.log(data);
 
-      return new Promise((resolve, reject) => {
-        const req = http.request(options, (res) => {
-          res.on('data', async (respData) => {
-            if (res.statusCode === 200) {
-              resolve(respData.toString());
-            }
-            reject(new Error(res.statusCode));
-          });
-        });
-
-        req.on('error', (error) => {
-          reject(error);
-        });
-
-        req.write(data);
-        req.end();
-
-        setTimeout(() => {
-          reject(new Error(408));
-        }, 5000);
-      });
+      const isHttps = JSON.parse(process.env.HELLO_TESS_HTTPS);
+      if (isHttps) {
+        const response = await sendHttps({ data, options });
+        return response;
+      }
+      const response = await sendHttp({ data, options });
+      return response;
     } catch (error) {
       console.log(error);
       throw new Error(500);

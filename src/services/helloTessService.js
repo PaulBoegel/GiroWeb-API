@@ -1,7 +1,4 @@
-const http = require('http');
-const https = require('https');
-require;
-
+const { SendHttp, SendHttps } = require('../helper/networkHelper');
 function HelloTess({
   transRepo,
   billStockRepo,
@@ -56,10 +53,10 @@ function HelloTess({
 
       const isHttps = JSON.parse(process.env.HELLO_TESS_HTTPS);
       if (isHttps) {
-        const response = await sendHttps({ data, options });
+        const response = await SendHttps({ data, options });
         return response;
       }
-      const response = await sendHttp({ data, options });
+      const response = await SendHttp({ data, options });
       return response;
     } catch (error) {
       console.log(error);
@@ -216,11 +213,11 @@ function HelloTess({
 
       const isHttps = JSON.parse(process.env.HELLO_TESS_HTTPS);
       if (isHttps) {
-        const response = await sendHttps({ data, options });
+        const response = await SendHttps({ data, options });
         await SetSendStatus(transactions, machineId, serviceKey);
         return response;
       }
-      const response = await sendHttp({ data, options });
+      const response = await SendHttp({ data, options });
       await SetSendStatus(transactions, machineId, serviceKey);
       return response;
     } catch (error) {

@@ -29,40 +29,20 @@
       "program": "${workspaceFolder}/test/testAPI.js"
     },
     {
-      "type": "node",
+      "args": [
+        "-u",
+        "bdd",
+        "--timeout",
+        "999999",
+        "--colors",
+        "${workspaceFolder}/test/helloTess"
+      ],
+      "internalConsoleOptions": "openOnSessionStart",
+      "name": "HelloTess - Tests",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
       "request": "launch",
-      "name": "trans repo - test",
-      "runtimeExecutable": "nodemon",
-      "runtimeArgs": ["--inspect"],
       "skipFiles": ["<node_internals>/**"],
-      "restart": true,
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "program": "${workspaceFolder}/test/repos/transRepoHarness.js"
-    },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "cash quantity repo - test",
-      "runtimeExecutable": "nodemon",
-      "runtimeArgs": ["--inspect"],
-      "skipFiles": ["<node_internals>/**"],
-      "restart": true,
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "program": "${workspaceFolder}/test/repos/cashQuantityRepoHarness.js"
-    },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "transaction repo - test",
-      "runtimeExecutable": "nodemon",
-      "runtimeArgs": ["--inspect"],
-      "skipFiles": ["<node_internals>/**"],
-      "restart": true,
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "program": "${workspaceFolder}/test/repos/transRepoHarness.js"
+      "type": "pwa-node"
     }
   ]
 }

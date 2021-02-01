@@ -140,62 +140,13 @@ function HelloTess({
     };
   }
 
-  function sendHttps({ data, options }) {
-    return new Promise((resolve, reject) => {
-      const req = https.request(options, (res) => {
-        res.on('data', async (respData) => {
-          if (res.statusCode === 200) {
-            resolve(respData.toString());
-          }
-          reject(new Error(res.statusCode));
-        });
-      });
-
-      req.on('error', (error) => {
-        reject(error);
-      });
-
-      req.write(data);
-      req.end();
-
-      setTimeout(() => {
-        reject(new Error(408));
-      }, 5000);
-    });
-  }
-
-  function sendHttp({ data, options }) {
-    return new Promise((resolve, reject) => {
-      const req = http.request(options, (res) => {
-        res.on('data', async (respData) => {
-          if (res.statusCode === 200) {
-            resolve(respData.toString());
-          }
-          reject(new Error(res.statusCode));
-        });
-      });
-
-      req.on('error', (error) => {
-        reject(error);
-      });
-
-      req.write(data);
-      req.end();
-
-      setTimeout(() => {
-        reject(new Error(408));
-      }, 5000);
-    });
-  }
-
   async function SendCashQuantities(newBillStock) {
     try {
-      await SaveBillStock(newBillStock);
+      await this.SaveBillStock(newBillStock);
       const { machineId, serviceKey, cashQuantities } = newBillStock;
       const transactions = await GetOpenTransactions(machineId);
       const time = newBillStock.cashQuantities[0].date;
       const date = newBillStock.cashQuantities[0].time;
-      await billTakingRepo.connect();
       cashQuantities.push(
         await PrepareBillAssumtion({ serviceKey, machineId, date, time })
       );

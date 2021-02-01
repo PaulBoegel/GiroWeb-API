@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon ./src/server.js",
-    "start:test-api": "nodemon ./test/testAPI.js",
+    "start:test-api": "nodemon ./test/api/testAPI.js",
     "test": "mocha -w",
     "test:hellotess": "mocha -w ./test/helloTess/",
     "test:repos": "mocha -w ./test/repos/"
@@ -35,7 +35,7 @@
     "i": "^0.3.6",
     "mocha": "^8.2.1",
     "nodemon": "^2.0.4",
-    "sinon": "^9.2.1"
+    "sinon": "^9.2.4"
   },
   "nodemonConfig": {
     "restartable": "rs",

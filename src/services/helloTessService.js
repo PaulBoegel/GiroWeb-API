@@ -115,8 +115,7 @@ function HelloTess({
   function prepareCashQuantitieOptions() {
     return {
       hostname: process.env.HELLO_TESS_URL,
-      // port: 4001,
-      path: '/cardServices/loadExternalData',
+      path: process.env.HELLO_TESS_PATH,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

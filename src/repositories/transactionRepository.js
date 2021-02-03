@@ -1,29 +1,8 @@
-const { MongoClient } = require('mongodb');
+const RepositoryBase = require('./repositoryBase');
 
-function TransactionRepository(dbConfig) {
-  const { dbName, host, port } = dbConfig;
-  const url = `mongodb://${host}:${port}`;
-  let db;
-
-  function connect() {
-    return new Promise((resolve, reject) => {
-      MongoClient.connect(
-        url,
-        {
-          useUnifiedTopology: true,
-          poolSize: dbConfig.poolSize,
-        },
-        (err, client) => {
-          if (err) throw reject(err);
-          db = client.db(dbName);
-          resolve(true);
-        }
-      );
-    });
-  }
-
+function TransactionRepository() {
   async function get(query, projection, limit) {
-    let transactions = db
+    let transactions = this.db
       .collection('transactions')
       .find(query, { fields: projection });
 
@@ -44,7 +23,7 @@ function TransactionRepository(dbConfig) {
       date,
       time,
     };
-    await db
+    await this.db
       .collection('transactions')
       .updateOne(keys, { $set: { ...data } }, { upsert: true });
   }
@@ -58,10 +37,14 @@ function TransactionRepository(dbConfig) {
       time,
     };
 
-    await db.collection('transactions').updateOne(keys, { $set: updateData });
+    await this.db
+      .collection('transactions')
+      .updateOne(keys, { $set: updateData });
   }
-
-  return { connect, get, add, update };
+  return Object.setPrototypeOf(
+    Object.assign(RepositoryBase(), { get, add, update }),
+    RepositoryBase
+  );
 }
 
 module.exports = TransactionRepository;

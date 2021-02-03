@@ -1,29 +1,8 @@
-const { MongoClient } = require('mongodb');
+const RepositoryBase = require('./repositoryBase');
 
-function BillStockRepository(dbConfig) {
-  const { dbName, host, port } = dbConfig;
-  const url = `mongodb://${host}:${port}`;
-  let db;
-
-  function connect() {
-    return new Promise((resolve, reject) => {
-      MongoClient.connect(
-        url,
-        {
-          useUnifiedTopology: true,
-          poolSize: dbConfig.poolSize,
-        },
-        (err, client) => {
-          if (err) throw reject(err);
-          db = client.db(dbName);
-          resolve(true);
-        }
-      );
-    });
-  }
-
+function BillStockRepository() {
   async function get(query, projection, limit) {
-    let result = db
+    let result = this.db
       .collection('billStock')
       .find(query, { fields: projection });
 
@@ -36,13 +15,13 @@ function BillStockRepository(dbConfig) {
     return result;
   }
 
-  async function add({serviceKey, machineId, cashQuantities}) {
+  async function add({ serviceKey, machineId, cashQuantities }) {
     const key = {
       serviceKey,
-      machineId
+      machineId,
     };
 
-    await db.collection('billStock').updateOne(
+    await this.db.collection('billStock').updateOne(
       key,
       {
         $addToSet: {
@@ -52,8 +31,10 @@ function BillStockRepository(dbConfig) {
       { upsert: true }
     );
   }
-
-  return { connect, get, add };
+  return Object.setPrototypeOf(
+    Object.assign(RepositoryBase(), { get, add }),
+    RepositoryBase
+  );
 }
 
 module.exports = BillStockRepository;

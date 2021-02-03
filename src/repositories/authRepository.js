@@ -1,36 +1,15 @@
-const { MongoClient } = require('mongodb');
+const RepositoryBase = require('./repositoryBase');
 
-function AuthRepository(dbConfig) {
-  const { dbName, host, port } = dbConfig;
-  const url = `mongodb://${host}:${port}`;
-  let db;
-
-  function connect() {
-    return new Promise((resolve, reject) => {
-      MongoClient.connect(
-        url,
-        {
-          useUnifiedTopology: true,
-          poolSize: dbConfig.poolSize,
-        },
-        (err, client) => {
-          if (err) throw reject(err);
-          db = client.db(dbName);
-          resolve(true);
-        }
-      );
-    });
-  }
-
+function AuthRepository() {
   async function update(updatedObj) {
     const { machineId, ...newData } = updatedObj;
-    return db
+    return this.db
       .collection('authentication')
       .updateOne({ machineId }, { $set: { ...newData } });
   }
 
   async function get(query, projection) {
-    const result = db
+    const result = this.db
       .collection('authentication')
       .find(query)
       .project(projection);
@@ -38,10 +17,17 @@ function AuthRepository(dbConfig) {
   }
 
   async function count(query) {
-    return db.collection('authentication').find(query).count();
+    return this.db.collection('authentication').find(query).count();
   }
 
-  return { connect, update, get, count };
+  return Object.setPrototypeOf(
+    Object.assign(RepositoryBase(), {
+      update,
+      get,
+      count,
+    }),
+    RepositoryBase
+  );
 }
 
 module.exports = AuthRepository;

@@ -1,35 +1,13 @@
-const { MongoClient } = require('mongodb');
+const RepositoryBase = require('./repositoryBase');
 
-function BillTakingRepository(dbConfig) {
-  const { dbName, host, port } = dbConfig;
-  const url = `mongodb://${host}:${port}`;
-  let db;
-
-  function connect() {
-    return new Promise((resolve, reject) => {
-      MongoClient.connect(
-        url,
-        {
-          useUnifiedTopology: true,
-          poolSize: dbConfig.poolSize,
-        },
-        (err, client) => {
-          if (err) throw reject(err);
-          db = client.db(dbName);
-          resolve(true);
-        }
-      );
-    });
-  }
-
-
-  async function add({serviceKey, machineId, cashQuantities}) {
+function BillTakingRepository() {
+  async function add({ serviceKey, machineId, cashQuantities }) {
     const key = {
       serviceKey,
-      machineId
+      machineId,
     };
 
-    await db.collection('billTaking').updateOne(
+    await this.db.collection('billTaking').updateOne(
       key,
       {
         $addToSet: {
@@ -40,26 +18,33 @@ function BillTakingRepository(dbConfig) {
     );
   }
 
-  async function updateQuantities({serviceKey, machineId, cashQuantities}) {
-    const updatePromises = cashQuantities.map(quantity => {
+  async function updateQuantities({ serviceKey, machineId, cashQuantities }) {
+    const updatePromises = cashQuantities.map((quantity) => {
       const keys = {
         serviceKey,
         machineId,
-        cashQuantities: { $elemMatch: {date: quantity.date, time: quantity.time }}
-      }
-      return db.collection('billTaking').updateOne(
-        keys, {$set: {"cashQuantities.$.send": true}}
-      )
-    })
+        cashQuantities: {
+          $elemMatch: { date: quantity.date, time: quantity.time },
+        },
+      };
+      return this.db
+        .collection('billTaking')
+        .updateOne(keys, { $set: { 'cashQuantities.$.send': true } });
+    });
     await Promise.all(updatePromises);
   }
 
-  async function get(query, projection){
-    const result = await db.collection('billTaking').find(query).project(projection);
+  async function get(query, projection) {
+    const result = await this.db
+      .collection('billTaking')
+      .find(query)
+      .project(projection);
     return result.toArray();
   }
-
-  return {connect, add, updateQuantities, get}
+  return Object.setPrototypeOf(
+    Object.assign(RepositoryBase(), { add, updateQuantities, get }),
+    RepositoryBase
+  );
 }
 
-module.exports = BillTakingRepository
+module.exports = BillTakingRepository;

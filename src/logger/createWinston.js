@@ -1,15 +1,26 @@
 const winston = require('winston');
-function CreateWinston() {
+const { format, config } = require('winston');
+const { combine, timestamp, json } = format;
+
+function CreateWinston(options) {
   const logger = winston.createLogger({
-    format: winston.format.json(),
-    transports: [new winston.transports.Console()],
+    levels: config.syslog.levels,
+    format: combine(timestamp({ format: options.dateFormat }), json()),
+    transports: [
+      new winston.transports.Console(options.console),
+      new winston.transports.File(options.file),
+    ],
   });
   return {
-    info(message) {
-      logger.log('info', message);
+    info(message, callback = () => {}) {
+      logger.log('info', message, () => {
+        callback();
+      });
     },
-    error(message) {
-      logger.log('error', message);
+    error(message, callback = () => {}) {
+      logger.log('error', message, () => {
+        callback();
+      });
     },
   };
 }

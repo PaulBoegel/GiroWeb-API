@@ -6,9 +6,10 @@
   "scripts": {
     "start": "nodemon ./src/server.js",
     "start:test-api": "nodemon ./test/api/testAPI.js",
-    "test": "mocha -w",
-    "test:hellotess": "mocha -w ./test/helloTess/",
-    "test:repos": "mocha -w ./test/repos/"
+    "test": "mocha './src/**/*.spec.js'"
+  },
+  "mocha": {
+    "watch": true
   },
   "keywords": [],
   "author": "",

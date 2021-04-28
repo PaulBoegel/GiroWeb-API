@@ -10,11 +10,12 @@ const AuthRepository = require('./repositories/authRepository');
 const AuthMiddleware = require('./middleware/authMiddleware');
 const GirowebServiceFactory = require('./girowebServiceFactory');
 
-function GirowebRestAPI(dbConf) {
+function GirowebRestAPI() {
   const app = express();
   const port = process.env.PORT || 3000;
-  const serviceFactory = new GirowebServiceFactory(dbConf);
-  const authRepository = AuthRepository(dbConf);
+
+  const serviceFactory = new GirowebServiceFactory();
+  const authRepository = AuthRepository();
   const authMiddleware = AuthMiddleware(jwt);
 
   app.use(cors());

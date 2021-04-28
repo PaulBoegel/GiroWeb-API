@@ -1,3 +1,4 @@
+appRoot = require('app-root-path');
 module.exports = {
   file: {
     filename: `${appRoot}/log/service.log`,

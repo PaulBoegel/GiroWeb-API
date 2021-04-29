@@ -1,7 +1,7 @@
 const TestService = require('./services/testService');
 const HelloTessService = require('./services/helloTessService');
 
-function GirowebServiceFactory(repos) {
+function ServiceFactory(repos) {
   function CreateService(key) {
     switch (key) {
       case 'HelloTess':
@@ -9,11 +9,11 @@ function GirowebServiceFactory(repos) {
       case 'Test':
         return new TestService(repos);
       default:
-        return null;
+        return undefined;
     }
   }
 
   return { CreateService };
 }
 
-module.exports = GirowebServiceFactory;
+module.exports = ServiceFactory;

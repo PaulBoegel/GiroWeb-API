@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const GirowebServiceFactory = require('./girowebServiceFactory');
+const ServiceFactory = require('./serviceFactory');
 const CardServiceRouter = require('./router/cardServiceRouter');
 const AuthenticationRouter = require('./router/authenticationRouter');
 const CardServiceController = require('./controller/cardServiceController');
@@ -36,7 +36,7 @@ const serviceRepos = {
   billTakingRepo: BillTakingRepository(),
   billAssumtionRepo: BillAssumtionRepository(),
 };
-const serviceFactory = new GirowebServiceFactory(serviceRepos);
+const serviceFactory = new ServiceFactory(serviceRepos);
 
 const authRepository = AuthRepository();
 const authMiddleware = AuthMiddleware(jwt);

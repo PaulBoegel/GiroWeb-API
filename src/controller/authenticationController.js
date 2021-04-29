@@ -42,14 +42,16 @@ function AuthenticationController({ jwt, authRepository }) {
   async function RefreshToken(req, res) {
     try {
       const { refreshToken } = req.body;
-      if (refreshToken == null) return res.sendStatus(401);
+      if (refreshToken == null || refreshToken == undefined)
+        return res.sendStatus(401);
       await authRepository.connect();
       const count = await authRepository.count({ refreshToken });
       if (count === 0) return res.sendStatus(403);
+
       jwt.verify(
         refreshToken,
         process.env.REFRESH_TOKEN_SECRET,
-        async (err, machine) => {
+        (err, machine) => {
           if (err) return res.sendStatus(403);
           const accessToken = generateAccessToken(machine);
           return res.send({ token: accessToken });

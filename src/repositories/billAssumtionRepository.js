@@ -23,7 +23,7 @@ function BillAssumtionRepository() {
       .collection('billAssumtion')
       .find({ serviceKey, machineId })
       .count();
-    if (exists === 0) await create(key);
+    if (exists === 0) await create.call(this, key);
     const result = await this.db.collection('billAssumtion').updateOne(
       {
         serviceKey,

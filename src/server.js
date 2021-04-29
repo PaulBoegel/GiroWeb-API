@@ -12,6 +12,10 @@ const CardServiceController = require('./controller/cardServiceController');
 const AuthenticationController = require('./controller/authenticationController');
 const AuthRepository = require('./repositories/authRepository');
 const AuthMiddleware = require('./middleware/authMiddleware');
+const TransactionRepository = require('./repositories/transactionRepository');
+const BillStockRepository = require('./repositories/billStockRepository');
+const BillAssumtionRepository = require('./repositories/billAssumtionRepository');
+const BillTakingRepository = require('./repositories/billTakingRepository');
 
 process.on('uncaughtException', (err) => {
   logger.error(err.stack, () => {
@@ -22,13 +26,20 @@ process.on('uncaughtException', (err) => {
 const app = express();
 const port = process.env.PORT || 3000;
 
-const serviceFactory = new GirowebServiceFactory();
-const authRepository = AuthRepository();
-const authMiddleware = AuthMiddleware(jwt);
-
 app.use(cors());
 app.use(bodyParser.raw());
 app.use(bodyParser.json());
+
+const serviceRepos = {
+  transRepo: TransactionRepository(),
+  billStockRepo: BillStockRepository(),
+  billTakingRepo: BillTakingRepository(),
+  billAssumtionRepo: BillAssumtionRepository(),
+};
+const serviceFactory = new GirowebServiceFactory(serviceRepos);
+
+const authRepository = AuthRepository();
+const authMiddleware = AuthMiddleware(jwt);
 
 const authenticationController = new AuthenticationController({
   jwt,
@@ -39,8 +50,6 @@ const authenticationRouter = new AuthenticationRouter(
   authenticationController
 );
 
-app.use('/api', authenticationRouter);
-
 const cardServiceController = new CardServiceController(serviceFactory);
 const cardServiceRouter = new CardServiceRouter(
   express.Router(),
@@ -48,6 +57,7 @@ const cardServiceRouter = new CardServiceRouter(
   cardServiceController
 );
 
+app.use('/api', authenticationRouter);
 app.use('/api', cardServiceRouter);
 
 app.listen(port, () => {

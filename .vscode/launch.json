@@ -35,10 +35,10 @@
         "--timeout",
         "999999",
         "--colors",
-        "${workspaceFolder}/test/helloTess"
+        "${workspaceFolder}/src/**/*.spec.js"
       ],
       "internalConsoleOptions": "openOnSessionStart",
-      "name": "HelloTess - Tests",
+      "name": "Tests",
       "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
       "request": "launch",
       "skipFiles": ["<node_internals>/**"],

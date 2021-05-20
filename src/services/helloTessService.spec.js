@@ -5,33 +5,40 @@ const {
   closeDb,
   clearDb,
 } = require('../../__test__/fixtures/db');
+const serviceFactory = require('./serviceFactory');
+const helloTessService = require('./helloTessService');
 const TransactionRepository = require('../repositories/transactionRepository');
 const BillAssumptionRepository = require('../repositories/billAssumptionRepository');
 const BillTakingRepository = require('../repositories/billTakingRepository');
+const BillStockRepository = require('../repositories/billStockRepository');
 const makeFakeTransaction = require('../../__test__/fixtures/transaction');
 const makeFakeCashQuantity = require('../../__test__/fixtures/cashQuantity');
 const { createCashQuantity } = require('../entities/cash-quantity');
-const HelloTess = require('./helloTessService');
 const createTransaction = require('../entities/transaction');
+const createFakeCashQuantity = require('../../__test__/fixtures/cashQuantity');
 
 const { expect } = chai;
 chai.use(chaiAsPromised);
 
 describe('helloTessService', () => {
   let options;
+  let createService;
   beforeEach(() => {
     options = {
+      network: {},
+      services: { helloTess: helloTessService },
       transRepo: TransactionRepository({ makeDb }),
-      billStockRepo: {},
+      billStockRepo: BillStockRepository({ makeDb }),
       billAssumptionRepo: BillAssumptionRepository({ makeDb }),
       billTakingRepo: BillTakingRepository({ makeDb }),
     };
+    createService = serviceFactory(options);
   });
 
   describe('SaveTransaction', () => {
     it('should return a transaction object', async () => {
       const transactionData = makeFakeTransaction({});
-      const service = HelloTess(options);
+      const service = createService('helloTess');
       const transaction = createTransaction(transactionData);
       const saved = await service.SaveTransaction(transactionData);
       expect(saved.getKeys()).eql(transaction.getKeys());
@@ -41,10 +48,10 @@ describe('helloTessService', () => {
     it('should send transaction data to the persinstence layer', async () => {
       const repo = TransactionRepository({ makeDb });
       const transactionData = makeFakeTransaction({});
-      const service = HelloTess(options);
+      const service = createService('helloTess');
       const transaction = createTransaction(transactionData);
       await service.SaveTransaction(transactionData);
-      const saved = await repo.get(transaction.getKeys());
+      const [saved] = await repo.get(transaction.getKeys());
       expect(saved.getKeys()).eql(transaction.getKeys());
       expect(saved.getData()).eql(transaction.getData());
     });
@@ -53,11 +60,11 @@ describe('helloTessService', () => {
     });
   });
 
-  describe('UpdateBillAssumption', () => {
+  describe('IncreaseBillAssumption', () => {
     it('should increase the bill assumptions with transaction data if the payment type is cash', async () => {
       const transactionData = makeFakeTransaction({});
       const transaction = createTransaction(transactionData);
-      const service = HelloTess(options);
+      const service = createService('helloTess');
       const updated = await service.IncreaseBillAssumption(
         transactionData
       );
@@ -70,7 +77,7 @@ describe('helloTessService', () => {
       const giroTransaction = makeFakeTransaction({
         paymentType: 'giro',
       });
-      const service = HelloTess(options);
+      const service = createService('helloTess');
       await service.IncreaseBillAssumption(cashTransaction);
       const updatedGiro = await service.IncreaseBillAssumption(
         giroTransaction
@@ -85,7 +92,7 @@ describe('helloTessService', () => {
     });
 
     it('should throw an error if no transaction data passed.', async () => {
-      const service = HelloTess(options);
+      const service = createService('helloTess');
       await expect(
         service.IncreaseBillAssumption()
       ).to.be.rejectedWith('No transaction data passed.');
@@ -98,7 +105,7 @@ describe('helloTessService', () => {
 
   describe('SaveBillTaken', () => {
     it('should return a cash quantity object', async () => {
-      const service = HelloTess(options);
+      const service = createService('helloTess');
       const billTakingData = makeFakeCashQuantity({
         type: 'bill taking',
       });
@@ -110,7 +117,7 @@ describe('helloTessService', () => {
 
     it('should send the cash quantity data to the persistence layer', async () => {
       const repo = BillTakingRepository({ makeDb });
-      const service = HelloTess(options);
+      const service = createService('helloTess');
       const billTakingData = makeFakeCashQuantity({
         type: 'bill taking',
       });
@@ -121,6 +128,87 @@ describe('helloTessService', () => {
       expect(saved.getData()).eql(billTaking.getData());
     });
 
+    afterEach(async () => {
+      await clearDb();
+    });
+  });
+
+  describe('SaveBillStock', () => {
+    it('should return a cash quantity object', async () => {
+      const service = createService('helloTess');
+      const billStockData = createFakeCashQuantity({
+        type: 'bill stock',
+      });
+      const billStock = createCashQuantity(billStockData);
+      const saved = await service.SaveBillStock(billStockData);
+      expect(saved.getKeys()).eql(billStock.getKeys());
+      expect(saved.getData()).eql(billStock.getData());
+    });
+    it('should send the cash quantity data to the persistence layer', async () => {
+      const repo = BillStockRepository({ makeDb });
+      const service = createService('helloTess');
+      const billStockData = makeFakeCashQuantity({
+        type: 'bill stock',
+      });
+      const billStock = createCashQuantity(billStockData);
+      await service.SaveBillStock(billStockData);
+      const [saved] = await repo.get(billStock.getKeys());
+      expect(saved.getKeys()).eql(billStock.getKeys());
+      expect(saved.getData()).eql(billStock.getData());
+    });
+    afterEach(async () => {
+      await clearDb();
+    });
+  });
+
+  describe('GetBillingData', () => {
+    it('should return an object with transaction, bill stock and assumption data', async () => {
+      const transactionData = makeFakeTransaction({
+        serviceKey: 'HelloTess',
+        machineId: 100,
+      });
+      const billStockData = makeFakeCashQuantity({
+        serviceKey: 'HelloTess',
+        machineId: 100,
+        type: 'bill stock',
+      });
+      const transRepo = TransactionRepository({ makeDb });
+      const billStockRepo = BillStockRepository({ makeDb });
+      const billAssumptionRepo = BillAssumptionRepository({ makeDb });
+
+      const transaction = await transRepo.add(transactionData);
+      await billAssumptionRepo.increase(transaction);
+      await billStockRepo.add(billStockData);
+
+      const service = createService('helloTess');
+      const billingData = await service.GetBillingData(100);
+
+      expect(billingData.transactions[0]).to.have.any.keys(
+        'cardId',
+        'paymentType',
+        'date',
+        'time'
+      );
+
+      expect(billingData.transactions[0]).to.not.have.any.keys(
+        'machineId',
+        'serviceKey'
+      );
+
+      for (let i = 0; i < 2; i += 1) {
+        expect(billingData.cashQuantities[i]).to.have.any.keys(
+          'date',
+          'time',
+          'paymentType',
+          'type',
+          'detail'
+        );
+        expect(billingData.cashQuantities[i]).to.not.have.any.keys(
+          'machineId',
+          'serviceKey'
+        );
+      }
+    });
     afterEach(async () => {
       await clearDb();
     });

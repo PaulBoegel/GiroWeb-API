@@ -1,40 +1,35 @@
-const RepositoryBase = require('./repositoryBase');
+const { createCashQuantity } = require('../entities/cash-quantity');
 
-function BillStockRepository() {
-  async function get(query, projection, limit) {
-    let result = this.db
-      .collection('billStock')
-      .find(query, { fields: projection });
-
-    if (limit > 0) {
-      result = result.limit(limit);
+function BillStockRepository({ makeDb }) {
+  async function get(query, projection) {
+    if (!query || Object.entries(query).length === 0) {
+      throw new Error('Query is empty.');
     }
+    const db = await makeDb();
+    const billStockArray = await db
+      .collection('billStock')
+      .find(query)
+      .project(projection)
+      .toArray();
 
-    result = await result.toArray();
-
-    return result;
-  }
-
-  async function add({ serviceKey, machineId, cashQuantities }) {
-    const key = {
-      serviceKey,
-      machineId,
-    };
-
-    await this.db.collection('billStock').updateOne(
-      key,
-      {
-        $addToSet: {
-          cashQuantities: { $each: cashQuantities },
-        },
-      },
-      { upsert: true }
+    return billStockArray.map((billStock) =>
+      createCashQuantity(billStock)
     );
   }
-  return Object.setPrototypeOf(
-    Object.assign(RepositoryBase(), { get, add }),
-    RepositoryBase
-  );
+
+  async function add(billStockData) {
+    const db = await makeDb();
+    const billStock = createCashQuantity(billStockData);
+    const keys = billStock.getKeys();
+    const data = billStock.getData();
+    const { ops } = await db.collection('billStock').insertOne({
+      ...keys,
+      ...data,
+    });
+    const { _id: id, ...result } = ops[0];
+    return createCashQuantity(result);
+  }
+  return { get, add };
 }
 
 module.exports = BillStockRepository;

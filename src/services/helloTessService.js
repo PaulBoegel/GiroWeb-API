@@ -1,208 +1,152 @@
-const { SendHttp, SendHttps } = require('../helper/networkHelper');
 const createTransaction = require('../entities/transaction');
-const {
-  createCashQuantity,
-  quantityTypes,
-} = require('../entities/cash-quantity');
 
-function HelloTess({
-  transRepo,
-  billStockRepo,
-  billAssumptionRepo,
-  billTakingRepo,
-}) {
-  async function SetSendStatus(transactions, machineId, serviceKey) {
-    await transRepo.connect();
-    transactions.forEach(async (transaction) => {
-      const updateTransaction = {
-        machineId,
-        serviceKey,
-        ...transaction,
-      };
-      await transRepo.update(updateTransaction, { send: true });
-    });
+const SERVICE_KEY = 'HelloTess';
+
+async function IncreaseBillAssumption(transactionData) {
+  if (!transactionData) {
+    throw Error('No transaction data passed.');
   }
-
-  async function IncreaseBillAssumption(transactionData) {
-    if (!transactionData) {
-      throw Error('No transaction data passed.');
-    }
-    const transaction = createTransaction(transactionData);
-    const { paymentType } = transaction.getData();
-    if (paymentType !== 'cash') {
-      const billAssumption = await billAssumptionRepo.get(
-        transaction.getKeys()
-      );
-      return billAssumption;
-    }
-    const billAssumption = await billAssumptionRepo.increase(
-      transaction
+  const transaction = createTransaction(transactionData);
+  const { paymentType } = transaction.getData();
+  if (paymentType !== 'cash') {
+    const billAssumption = await this.billAssumptionRepo.get(
+      transaction.getKeys()
     );
     return billAssumption;
   }
+  const billAssumption = await this.billAssumptionRepo.increase(
+    transaction
+  );
+  return billAssumption;
+}
 
-  async function SaveBillTaking(billTakingData) {
-    const billTaking = await billTakingRepo.add(billTakingData);
-    return billTaking;
-  }
+async function SaveBillTaking(billTakingData) {
+  const billTaking = await this.billTakingRepo.add(billTakingData);
+  return billTaking;
+}
 
-  async function SendBillTaking(newBillTaking) {
-    try {
-      const { machineId, cashQuantities } = newBillTaking;
-      await SaveBillTaking(newBillTaking);
-      const options = prepareCashQuantitieOptions();
-      const time = newBillTaking.cashQuantities[0].date;
-      const date = newBillTaking.cashQuantities[0].time;
-      const data = prepareCashQuantitieJsonObj(
-        machineId,
-        time,
-        date,
-        [],
-        cashQuantities
-      );
+async function SaveTransaction(transactionData) {
+  const saved = await this.transRepo.add({
+    ...transactionData,
+    send: false,
+  });
+  return saved;
+}
 
-      console.log(data);
+async function SaveBillStock(billStockData) {
+  const saved = await this.billStockRepo.add({
+    ...billStockData,
+    send: false,
+  });
+  return saved;
+}
 
-      const isHttps = JSON.parse(process.env.HELLO_TESS_HTTPS);
-      if (isHttps) {
-        const response = await SendHttps({ data, options });
-        return response;
-      }
-      const response = await SendHttp({ data, options });
-      return response;
-    } catch (error) {
-      console.log(error);
-      throw new Error(500);
-    }
-  }
-  async function SaveTransaction(transactionData) {
-    const saved = await transRepo.add(transactionData);
-    return saved;
-  }
-
-  async function SaveBillStock(billStock) {
-    await billStockRepo.connect();
-    await billStockRepo.add(billStock);
-    return 200;
-  }
-
-  async function GetOpenTransactions(machineId) {
-    await transRepo.connect();
-    const openTransactions = await transRepo.get(
-      { machineId, send: false },
-      { _id: 0, machineId: 0, serviceKey: 0 }
-    );
-    return openTransactions;
-  }
-
-  function prepareCashQuantitieJsonObj(
+function prepareCashQuantitieJsonObj(
+  machineId,
+  date,
+  time,
+  transactions,
+  cashQuantities
+) {
+  const headerTmp = {
+    type: 'data',
+    name: 'audit',
+    version: '1.0',
     machineId,
-    date,
-    time,
-    transactions,
-    cashQuantities
-  ) {
-    const headerTmp = {
-      type: 'data',
-      name: 'audit',
-      version: '1.0',
-      machineId,
-      date: time,
-      time: date,
-    };
+    date: time,
+    time: date,
+  };
 
-    return JSON.stringify({
-      header: headerTmp,
-      body: {
-        transactions,
-        cashQuantities,
-      },
-    });
-  }
+  return JSON.stringify({
+    header: headerTmp,
+    body: {
+      transactions,
+      cashQuantities,
+    },
+  });
+}
 
-  function prepareCashQuantitieOptions() {
-    return {
-      hostname: process.env.HELLO_TESS_URL,
-      path: process.env.HELLO_TESS_PATH,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    };
-  }
-
-  async function PrepareBillAssumption({
-    serviceKey,
-    machineId,
-    date,
-    time,
-  }) {
-    await billAssumptionRepo.connect();
-    const getResult = await billAssumptionRepo.get(
-      { serviceKey, machineId },
-      { _id: 0, detail: 1, total: 1 }
-    );
-    if (getResult.length === 0) return undefined;
-    return {
-      date,
-      time,
-      type: 'bill assumption',
-      paymentType: 'cash',
-      total: getResult[0].total,
-      detail: getResult[0].detail,
-    };
-  }
-
-  async function SendCashQuantities(newBillStock) {
-    try {
-      await this.SaveBillStock(newBillStock);
-      const { machineId, serviceKey, cashQuantities } = newBillStock;
-      const transactions = await GetOpenTransactions(machineId);
-      const time = newBillStock.cashQuantities[0].date;
-      const date = newBillStock.cashQuantities[0].time;
-      cashQuantities.push(
-        await PrepareBillAssumption({
-          serviceKey,
-          machineId,
-          date,
-          time,
-        })
-      );
-      const options = prepareCashQuantitieOptions();
-      const data = prepareCashQuantitieJsonObj(
-        machineId,
-        time,
-        date,
-        transactions,
-        cashQuantities
-      );
-
-      console.log(data);
-
-      const isHttps = JSON.parse(process.env.HELLO_TESS_HTTPS);
-      if (isHttps) {
-        const response = await SendHttps({ data, options });
-        await SetSendStatus(transactions, machineId, serviceKey);
-        return response;
-      }
-      const response = await SendHttp({ data, options });
-      await SetSendStatus(transactions, machineId, serviceKey);
-      return response;
-    } catch (error) {
-      console.log(error);
-      throw new Error(500);
-    }
-  }
-
+function prepareCashQuantitieOptions() {
   return {
-    SendCashQuantities,
-    SendBillTaking,
-    SaveTransaction,
-    SaveBillStock,
-    SaveBillTaking,
-    IncreaseBillAssumption,
-    PrepareBillAssumption,
+    hostname: process.env.HELLO_TESS_URL,
+    path: process.env.HELLO_TESS_PATH,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
   };
 }
 
-module.exports = HelloTess;
+async function GetOpenTransactionValues(keys) {
+  const openTransactions = await this.transRepo.get({
+    ...keys,
+    send: false,
+  });
+  if (!openTransactions) return undefined;
+  return openTransactions.map((transaction) => {
+    const { machineId, serviceKey, ...transactionKeys } =
+      transaction.getKeys();
+    return { ...transactionKeys, ...transaction.getData() };
+  });
+}
+
+async function GetOpenBillStockValues(keys) {
+  const openBillStocks = await this.billStockRepo.get({
+    ...keys,
+    send: false,
+  });
+  if (!openBillStocks) return undefined;
+  return openBillStocks.map((billStock) => {
+    const { machineId, serviceKey, ...billStockKeys } =
+      billStock.getKeys();
+    return { ...billStockKeys, ...billStock.getData() };
+  });
+}
+
+async function GetBillAssumptionValues(keys) {
+  const billAssumption = await this.billAssumptionRepo.get(keys);
+  if (!billAssumption) return undefined;
+  const { machineId, serviceKey, ...billAssumptionKeys } =
+    billAssumption.getKeys();
+  return {
+    ...billAssumptionKeys,
+    ...billAssumption.getData(),
+  };
+}
+
+async function GetBillingData(machineId) {
+  const keys = { machineId, serviceKey: SERVICE_KEY };
+  const transactions = await GetOpenTransactionValues.call(
+    this,
+    keys
+  );
+  const billStock = await GetOpenBillStockValues.call(this, keys);
+  const billAssumption = await GetBillAssumptionValues.call(
+    this,
+    keys
+  );
+
+  return {
+    transactions,
+    cashQuantities: [...billStock, billAssumption],
+  };
+}
+
+async function GetBillTakingData(machineId) {
+  const keys = { machineId, serviceKey: SERVICE_KEY };
+  const billTakings = await this.billTakingRepo.get(keys);
+  if (!billTakings) return undefined;
+  return {
+    ...billTakings.getKeys(),
+    ...billTakings.getData(),
+  };
+}
+
+module.exports = {
+  GetBillingData,
+  GetBillTakingData,
+  SaveTransaction,
+  SaveBillStock,
+  SaveBillTaking,
+  IncreaseBillAssumption,
+};

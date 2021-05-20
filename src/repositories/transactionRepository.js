@@ -1,19 +1,20 @@
 const createTransaction = require('../entities/transaction');
 
 function TransactionRepository({ makeDb }) {
-  async function get(query, projection, limit) {
-    const db = await makeDb();
-    let transactions = db
-      .collection('transactions')
-      .find(query, { fields: projection });
-
-    if (limit > 0) {
-      transactions = transactions.limit(limit);
+  async function get(query, projection) {
+    if (!query || Object.entries(query).length === 0) {
+      throw new Error('Query is empty.');
     }
+    const db = await makeDb();
+    const transactionsArray = await db
+      .collection('transactions')
+      .find(query)
+      .project(projection)
+      .toArray();
 
-    [transactions] = await transactions.toArray();
-
-    return createTransaction(transactions);
+    return transactionsArray.map((transaction) =>
+      createTransaction(transaction)
+    );
   }
 
   async function add(transactionData) {

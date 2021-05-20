@@ -10,6 +10,7 @@ module.exports = function buildCreateCashQuantity({
     type,
     paymentType,
     total,
+    send = false,
     detail,
   }) {
     if (!machineId) {
@@ -46,7 +47,7 @@ module.exports = function buildCreateCashQuantity({
         return { serviceKey, machineId, date, time };
       },
       getData: () => {
-        return { type, paymentType, total, detail };
+        return { type, paymentType, total, detail, send };
       },
       getDetailEntry: (index) => {
         if (index > 3 || index === undefined || index === null)

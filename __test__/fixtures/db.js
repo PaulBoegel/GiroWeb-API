@@ -20,12 +20,16 @@ async function makeDb() {
 }
 
 async function closeDb() {
+  if (!connection) return;
   await connection.close();
 }
 
 async function clearDb() {
+  if (!db) return false;
   await db.collection('transactions').deleteMany({});
   await db.collection('billAssumption').deleteMany({});
+  await db.collection('billStock').deleteMany({});
+  await db.collection('billTaking').deleteMany({});
   return true;
 }
 

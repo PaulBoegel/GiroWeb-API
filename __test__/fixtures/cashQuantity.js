@@ -7,6 +7,7 @@ function createFakeCashQuantity(overrides) {
     paymentType: 'cash',
     type: 'bill assumption',
     total: 500,
+    send: false,
     detail: [
       {
         value: 500,

@@ -1,3 +1,5 @@
+const createTransaction = require('../entities/transaction');
+
 function TransactionRepository({ makeDb }) {
   async function get(query, projection, limit) {
     const db = await makeDb();
@@ -9,20 +11,20 @@ function TransactionRepository({ makeDb }) {
       transactions = transactions.limit(limit);
     }
 
-    transactions = await transactions.toArray();
+    [transactions] = await transactions.toArray();
 
-    return transactions;
+    return createTransaction(transactions);
   }
 
-  async function add(transaction) {
+  async function add(transactionData) {
     const db = await makeDb();
-    const keys = transaction.getKeys();
-    const data = transaction.getData();
-    const { ops } = await db
-      .collection('transactions')
-      .insertOne({ ...keys, ...data });
+    const transaction = createTransaction(transactionData);
+    const { ops } = await db.collection('transactions').insertOne({
+      ...transaction.getKeys(),
+      ...transaction.getData(),
+    });
     const { _id: id, ...result } = ops[0];
-    return result;
+    return createTransaction(result);
   }
 
   async function update(transaction, updateData) {

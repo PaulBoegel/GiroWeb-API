@@ -46,7 +46,7 @@ module.exports = function buildCreateCashQuantity({
         return { serviceKey, machineId, date, time };
       },
       getData: () => {
-        return { paymentType, total, detail };
+        return { type, paymentType, total, detail };
       },
       getDetailEntry: (index) => {
         if (index > 3 || index === undefined || index === null)

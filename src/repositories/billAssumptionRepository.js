@@ -1,3 +1,5 @@
+const { createCashQuantity } = require('../entities/cash-quantity');
+
 function BillAssumptionRepository({ makeDb }) {
   async function create(keys, amount) {
     const db = await makeDb();
@@ -63,7 +65,7 @@ function BillAssumptionRepository({ makeDb }) {
     const { amount } = transaction.getData();
     if ((await isExisting(transaction.getKeys())) === false) {
       const result = await create(transaction.getKeys(), amount);
-      return result;
+      return createCashQuantity(result);
     }
 
     const result = await update({
@@ -71,15 +73,18 @@ function BillAssumptionRepository({ makeDb }) {
       amount,
     });
 
-    return result;
+    return createCashQuantity(result);
   }
 
   async function get(query, projection) {
+    if (!query || Object.entries(query).length === 0) {
+      throw new Error('Query cannot be empty.');
+    }
     const db = await makeDb();
     const { _id, ...result } = await db
       .collection('billAssumption')
       .findOne(query, projection);
-    return result;
+    return createCashQuantity(result);
   }
 
   return { increase, get };

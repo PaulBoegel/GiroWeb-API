@@ -30,27 +30,20 @@ function HelloTess({
     const transaction = createTransaction(transactionData);
     const { paymentType } = transaction.getData();
     if (paymentType !== 'cash') {
-      const billAssumptionData = await billAssumptionRepo.get(
+      const billAssumption = await billAssumptionRepo.get(
         transaction.getKeys()
       );
-      return createCashQuantity(billAssumptionData);
+      return billAssumption;
     }
-    const result = await billAssumptionRepo.increase(transaction);
-    return result;
+    const billAssumption = await billAssumptionRepo.increase(
+      transaction
+    );
+    return billAssumption;
   }
 
-  async function SaveBillTaking(billTaking) {
-    const { serviceKey, machineId, cashQuantities } = billTaking;
-    const tmpQuantities = cashQuantities.map((quantity) => {
-      return { ...quantity, send: true };
-    });
-    await billTakingRepo.connect();
-    await billTakingRepo.add({
-      serviceKey,
-      machineId,
-      cashQuantities: tmpQuantities,
-    });
-    return 200;
+  async function SaveBillTaking(billTakingData) {
+    const billTaking = await billTakingRepo.add(billTakingData);
+    return billTaking;
   }
 
   async function SendBillTaking(newBillTaking) {
@@ -83,8 +76,7 @@ function HelloTess({
     }
   }
   async function SaveTransaction(transactionData) {
-    const transaction = createTransaction(transactionData);
-    const saved = await transRepo.add(transaction);
+    const saved = await transRepo.add(transactionData);
     return saved;
   }
 

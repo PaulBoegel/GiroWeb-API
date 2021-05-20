@@ -1,20 +1,17 @@
-function BillTakingRepository({ makeDb }) {
-  async function add({ serviceKey, machineId, cashQuantities }) {
-    const db = await makeDb();
-    const key = {
-      serviceKey,
-      machineId,
-    };
+const { createCashQuantity } = require('../entities/cash-quantity');
 
-    await db.collection('billTaking').updateOne(
-      key,
-      {
-        $addToSet: {
-          cashQuantities: { $each: cashQuantities },
-        },
-      },
-      { upsert: true }
-    );
+function BillTakingRepository({ makeDb }) {
+  async function add(billTakingData) {
+    const db = await makeDb();
+    const billTaking = createCashQuantity(billTakingData);
+    const keys = billTaking.getKeys();
+    const data = billTaking.getData();
+    const { ops } = await db.collection('billTaking').insertOne({
+      ...keys,
+      ...data,
+    });
+    const { _id: id, ...result } = ops[0];
+    return createCashQuantity(result);
   }
 
   async function updateQuantities({
@@ -39,12 +36,16 @@ function BillTakingRepository({ makeDb }) {
   }
 
   async function get(query, projection) {
+    if (!query || Object.entries(query).length === 0) {
+      throw new Error('Query is empty.');
+    }
     const db = await makeDb();
-    const result = await db
+    const [result] = await db
       .collection('billTaking')
       .find(query)
-      .project(projection);
-    return result.toArray();
+      .project(projection)
+      .toArray();
+    return createCashQuantity(result);
   }
   return { add, updateQuantities, get };
 }

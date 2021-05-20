@@ -1,23 +1,42 @@
 const { SendHttp, SendHttps } = require('../helper/networkHelper');
+const createTransaction = require('../entities/transaction');
+const {
+  createCashQuantity,
+  quantityTypes,
+} = require('../entities/cash-quantity');
+
 function HelloTess({
   transRepo,
   billStockRepo,
-  billAssumtionRepo,
+  billAssumptionRepo,
   billTakingRepo,
 }) {
   async function SetSendStatus(transactions, machineId, serviceKey) {
     await transRepo.connect();
     transactions.forEach(async (transaction) => {
-      const updateTransaction = { machineId, serviceKey, ...transaction };
+      const updateTransaction = {
+        machineId,
+        serviceKey,
+        ...transaction,
+      };
       await transRepo.update(updateTransaction, { send: true });
     });
   }
 
-  async function SaveBillAssumtion(transaction) {
-    if (transaction.paymentType !== 'cash') return;
-    const { serviceKey, machineId, amount } = transaction;
-    await billAssumtionRepo.connect();
-    await billAssumtionRepo.add({ serviceKey, machineId, value: amount });
+  async function IncreaseBillAssumption(transactionData) {
+    if (!transactionData) {
+      throw Error('No transaction data passed.');
+    }
+    const transaction = createTransaction(transactionData);
+    const { paymentType } = transaction.getData();
+    if (paymentType !== 'cash') {
+      const billAssumptionData = await billAssumptionRepo.get(
+        transaction.getKeys()
+      );
+      return createCashQuantity(billAssumptionData);
+    }
+    const result = await billAssumptionRepo.increase(transaction);
+    return result;
   }
 
   async function SaveBillTaking(billTaking) {
@@ -63,13 +82,10 @@ function HelloTess({
       throw new Error(500);
     }
   }
-  async function SaveTransaction(transaction) {
-    const tmpTransaction = transaction;
-    tmpTransaction.send = false;
-    await transRepo.connect();
-    await transRepo.add(tmpTransaction);
-    await SaveBillAssumtion(tmpTransaction);
-    return 200;
+  async function SaveTransaction(transactionData) {
+    const transaction = createTransaction(transactionData);
+    const saved = await transRepo.add(transaction);
+    return saved;
   }
 
   async function SaveBillStock(billStock) {
@@ -123,9 +139,14 @@ function HelloTess({
     };
   }
 
-  async function PrepareBillAssumtion({ serviceKey, machineId, date, time }) {
-    await billAssumtionRepo.connect();
-    const getResult = await billAssumtionRepo.get(
+  async function PrepareBillAssumption({
+    serviceKey,
+    machineId,
+    date,
+    time,
+  }) {
+    await billAssumptionRepo.connect();
+    const getResult = await billAssumptionRepo.get(
       { serviceKey, machineId },
       { _id: 0, detail: 1, total: 1 }
     );
@@ -133,7 +154,7 @@ function HelloTess({
     return {
       date,
       time,
-      type: 'bill assumtion',
+      type: 'bill assumption',
       paymentType: 'cash',
       total: getResult[0].total,
       detail: getResult[0].detail,
@@ -148,7 +169,12 @@ function HelloTess({
       const time = newBillStock.cashQuantities[0].date;
       const date = newBillStock.cashQuantities[0].time;
       cashQuantities.push(
-        await PrepareBillAssumtion({ serviceKey, machineId, date, time })
+        await PrepareBillAssumption({
+          serviceKey,
+          machineId,
+          date,
+          time,
+        })
       );
       const options = prepareCashQuantitieOptions();
       const data = prepareCashQuantitieJsonObj(
@@ -177,13 +203,13 @@ function HelloTess({
   }
 
   return {
-    SaveTransaction,
     SendCashQuantities,
-    SaveBillStock,
-    SaveBillAssumtion,
-    SaveBillTaking,
     SendBillTaking,
-    PrepareBillAssumtion,
+    SaveTransaction,
+    SaveBillStock,
+    SaveBillTaking,
+    IncreaseBillAssumption,
+    PrepareBillAssumption,
   };
 }
 

@@ -1,13 +1,12 @@
-const RepositoryBase = require('./repositoryBase');
-
-function BillTakingRepository() {
+function BillTakingRepository({ makeDb }) {
   async function add({ serviceKey, machineId, cashQuantities }) {
+    const db = await makeDb();
     const key = {
       serviceKey,
       machineId,
     };
 
-    await this.db.collection('billTaking').updateOne(
+    await db.collection('billTaking').updateOne(
       key,
       {
         $addToSet: {
@@ -18,7 +17,12 @@ function BillTakingRepository() {
     );
   }
 
-  async function updateQuantities({ serviceKey, machineId, cashQuantities }) {
+  async function updateQuantities({
+    serviceKey,
+    machineId,
+    cashQuantities,
+  }) {
+    const db = await makeDb();
     const updatePromises = cashQuantities.map((quantity) => {
       const keys = {
         serviceKey,
@@ -27,7 +31,7 @@ function BillTakingRepository() {
           $elemMatch: { date: quantity.date, time: quantity.time },
         },
       };
-      return this.db
+      return db
         .collection('billTaking')
         .updateOne(keys, { $set: { 'cashQuantities.$.send': true } });
     });
@@ -35,16 +39,14 @@ function BillTakingRepository() {
   }
 
   async function get(query, projection) {
-    const result = await this.db
+    const db = await makeDb();
+    const result = await db
       .collection('billTaking')
       .find(query)
       .project(projection);
     return result.toArray();
   }
-  return Object.setPrototypeOf(
-    Object.assign(RepositoryBase(), { add, updateQuantities, get }),
-    RepositoryBase
-  );
+  return { add, updateQuantities, get };
 }
 
 module.exports = BillTakingRepository;

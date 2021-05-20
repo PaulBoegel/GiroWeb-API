@@ -14,7 +14,7 @@ const AuthRepository = require('./repositories/authRepository');
 const AuthMiddleware = require('./middleware/authMiddleware');
 const TransactionRepository = require('./repositories/transactionRepository');
 const BillStockRepository = require('./repositories/billStockRepository');
-const BillAssumtionRepository = require('./repositories/billAssumtionRepository');
+const BillAssumptionRepository = require('./repositories/billAssumptionRepository');
 const BillTakingRepository = require('./repositories/billTakingRepository');
 
 process.on('uncaughtException', (err) => {
@@ -34,7 +34,7 @@ const serviceRepos = {
   transRepo: TransactionRepository(),
   billStockRepo: BillStockRepository(),
   billTakingRepo: BillTakingRepository(),
-  billAssumtionRepo: BillAssumtionRepository(),
+  billAssumptionRepo: BillAssumptionRepository(),
 };
 const serviceFactory = new ServiceFactory(serviceRepos);
 
@@ -50,7 +50,9 @@ const authenticationRouter = new AuthenticationRouter(
   authenticationController
 );
 
-const cardServiceController = new CardServiceController(serviceFactory);
+const cardServiceController = new CardServiceController(
+  serviceFactory
+);
 const cardServiceRouter = new CardServiceRouter(
   express.Router(),
   authMiddleware,

@@ -1,27 +1,29 @@
-const expect = require('chai').expect;
+const { expect } = require('chai');
 const ServiceFactory = require('./serviceFactory');
+
 describe('serviceFactory', () => {
   describe('CreateService', () => {
-    let serviceFactory, repos;
+    let serviceFactory;
+    let repos;
     beforeEach(() => {
       repos = {
         transRepo: {},
         billStockRepo: {},
         billTakingRepo: {},
-        billAssumtionRepo: {},
+        billAssumptionRepo: {},
       };
       serviceFactory = ServiceFactory(repos);
     });
     it('should create all services', () => {
-      const serviceNames = [serviceFactory.HELLO_TESS, serviceFactory.TEST];
+      const serviceNames = [serviceFactory.HELLO_TESS];
       serviceNames.forEach((name) => {
         const service = serviceFactory.CreateService(name);
-        expect(service).to.have.property('SaveTransaction');
+        expect(service).to.be.an('object');
       });
     });
     it('should return undefined if no service is available for the determined key', () => {
       const service = serviceFactory.CreateService('none');
-      expect(service).to.be.undefined;
+      expect(service).to.be.an('undefined');
     });
   });
 });

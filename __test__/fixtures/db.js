@@ -1,9 +1,8 @@
-const { processenv } = require('processenv');
 const { MongoClient } = require('mongodb');
 
-const host = processenv('DB_HOST');
-const port = processenv('DB_PORT');
-const dbName = processenv('DB_NAME');
+const host = 'localhost';
+const port = 27017;
+const dbName = 'GW_SERVICE_TEST';
 const url = `mongodb://${host}:${port}`;
 
 let db;

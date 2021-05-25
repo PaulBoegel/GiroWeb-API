@@ -7,7 +7,7 @@ module.exports = function buildCreateTransaction({
     cardId,
     paymentType,
     amount,
-    transactionCount,
+    transactionCounter,
     date,
     time,
     send,
@@ -27,8 +27,8 @@ module.exports = function buildCreateTransaction({
     if (!amount) {
       throw new Error('Transaction must have an amount.');
     }
-    if (!transactionCount) {
-      throw new Error('Transaction must have a transaction count.');
+    if (!transactionCounter) {
+      throw new Error('Transaction must have a transaction counter.');
     }
     if (typeof send !== 'boolean') {
       throw new Error('Transaction must have a send status.');
@@ -36,8 +36,8 @@ module.exports = function buildCreateTransaction({
     if (!dateTimeValidator(date, 'DD.MM.YYYY')) {
       throw new Error('Date format is not DD.MM.YYYY.');
     }
-    if (!dateTimeValidator(time, 'HH:mm')) {
-      throw new Error('Time format is not HH:mm.');
+    if (!dateTimeValidator(time, 'HH:mm:ss')) {
+      throw new Error('Time format is not HH:mm:ss.');
     }
 
     return Object.freeze({
@@ -49,7 +49,7 @@ module.exports = function buildCreateTransaction({
           cardId,
           amount,
           paymentType,
-          transactionCount,
+          transactionCounter,
           send,
         };
       },

@@ -51,13 +51,13 @@ describe('cashQuantity', () => {
     );
     expect(() => createCashQuantity(rightCashQuantity)).not.throw();
   });
-  it('must have a time with HH:mm format', async () => {
+  it('must have a time with HH:mm:ss format', async () => {
     const badCashQuantity = createFakeCashQuantity({ time: '10-45' });
     const rightCashQuantity = createFakeCashQuantity({
-      time: '18:40',
+      time: '18:40:55',
     });
     expect(() => createCashQuantity(badCashQuantity)).to.throw(
-      'Time format is not HH:mm.'
+      'Time format is not HH:mm:ss.'
     );
     expect(() => createCashQuantity(rightCashQuantity)).not.throw();
   });

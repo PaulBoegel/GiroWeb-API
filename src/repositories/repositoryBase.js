@@ -1,9 +1,10 @@
+const { processenv } = require('processenv');
 const { MongoClient } = require('mongodb');
 
 function RepositoryBase() {
-  const host = process.env.DB_HOST;
-  const port = process.env.DB_PORT;
-  const dbName = process.env.DB_NAME;
+  const host = processenv('DB_HOST');
+  const port = processenv('DB_PORT');
+  const dbName = processenv('DB_NAME');
   const url = `mongodb://${host}:${port}`;
   let db;
 

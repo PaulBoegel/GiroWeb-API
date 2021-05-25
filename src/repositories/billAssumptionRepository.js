@@ -1,19 +1,21 @@
 const { createCashQuantity } = require('../entities/cash-quantity');
 
 function BillAssumptionRepository({ makeDb }) {
-  async function create(keys, amount) {
+  async function create(keys, data) {
     const db = await makeDb();
     const values = [500, 1000, 2000, 5000];
     const { ops } = await db.collection('billAssumption').insertOne({
       ...keys,
-      total: 0,
+      date: data.date,
+      time: data.time,
+      total: data.amount,
       type: 'bill assumption',
       paymentType: 'cash',
       detail: values.map((value) => {
         return {
           value,
-          quantity: amount === value ? 1 : 0,
-          total: amount === value ? amount : 0,
+          quantity: data.amount === value ? 1 : 0,
+          total: data.amount === value ? data.amount : 0,
         };
       }),
     });
@@ -29,26 +31,27 @@ function BillAssumptionRepository({ makeDb }) {
     amount,
   }) {
     const db = await makeDb();
-    const result = await db.collection('billAssumption').updateOne(
-      {
-        serviceKey,
-        machineId,
-        date,
-        time,
-        'detail.value': amount,
-      },
-      {
-        $set: {
-          date,
-          time,
+    const result = await db
+      .collection('billAssumption')
+      .findOneAndUpdate(
+        {
+          serviceKey,
+          machineId,
+          'detail.value': amount,
         },
-        $inc: {
-          total: amount,
-          'detail.$.quantity': 1,
-          'detail.$.total': amount,
+        {
+          $set: {
+            date,
+            time,
+          },
+          $inc: {
+            total: amount,
+            'detail.$.quantity': 1,
+            'detail.$.total': amount,
+          },
         },
-      }
-    );
+        { returnOriginal: false }
+      );
     return result;
   }
 
@@ -62,18 +65,26 @@ function BillAssumptionRepository({ makeDb }) {
   }
 
   async function increase(transaction) {
+    const { serviceKey, machineId, date, time } =
+      transaction.getKeys();
     const { amount } = transaction.getData();
     if ((await isExisting(transaction.getKeys())) === false) {
-      const result = await create(transaction.getKeys(), amount);
+      const result = await create(
+        { serviceKey, machineId },
+        { date, time, amount }
+      );
       return createCashQuantity(result);
     }
 
     const result = await update({
-      ...transaction.getKeys(),
+      serviceKey,
+      machineId,
+      date,
+      time,
       amount,
     });
 
-    return createCashQuantity(result);
+    return createCashQuantity(result.value);
   }
 
   async function get(query, projection) {
@@ -81,9 +92,10 @@ function BillAssumptionRepository({ makeDb }) {
       throw new Error('Query cannot be empty.');
     }
     const db = await makeDb();
-    const { _id, ...result } = await db
+    const result = await db
       .collection('billAssumption')
       .findOne(query, projection);
+    if (!result) return undefined;
     return createCashQuantity(result);
   }
 

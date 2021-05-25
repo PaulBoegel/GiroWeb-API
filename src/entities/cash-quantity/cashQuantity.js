@@ -28,8 +28,8 @@ module.exports = function buildCreateCashQuantity({
     if (!dateTimeValidator(date, 'DD.MM.YYYY')) {
       throw new Error('Date format is not DD.MM.YYYY.');
     }
-    if (!dateTimeValidator(time, 'HH:mm')) {
-      throw new Error('Time format is not HH:mm.');
+    if (!dateTimeValidator(time, 'HH:mm:ss')) {
+      throw new Error('Time format is not HH:mm:ss.');
     }
 
     if (!typeCheck(type)) {

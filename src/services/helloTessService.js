@@ -7,11 +7,13 @@ async function IncreaseBillAssumption(transactionData) {
     throw Error('No transaction data passed.');
   }
   const transaction = createTransaction(transactionData);
+  const { machineId, serviceKey } = transaction.getKeys();
   const { paymentType } = transaction.getData();
   if (paymentType !== 'cash') {
-    const billAssumption = await this.billAssumptionRepo.get(
-      transaction.getKeys()
-    );
+    const billAssumption = await this.billAssumptionRepo.get({
+      machineId,
+      serviceKey,
+    });
     return billAssumption;
   }
   const billAssumption = await this.billAssumptionRepo.increase(
@@ -77,68 +79,64 @@ function prepareCashQuantitieOptions() {
   };
 }
 
-async function GetOpenTransactionValues(keys) {
+async function GetOpenTransactions(keys) {
   const openTransactions = await this.transRepo.get({
     ...keys,
     send: false,
   });
   if (!openTransactions) return undefined;
-  return openTransactions.map((transaction) => {
-    const { machineId, serviceKey, ...transactionKeys } =
-      transaction.getKeys();
-    return { ...transactionKeys, ...transaction.getData() };
-  });
+  return openTransactions;
 }
 
-async function GetOpenBillStockValues(keys) {
+async function GetOpenBillStocks(keys) {
   const openBillStocks = await this.billStockRepo.get({
     ...keys,
     send: false,
   });
   if (!openBillStocks) return undefined;
-  return openBillStocks.map((billStock) => {
-    const { machineId, serviceKey, ...billStockKeys } =
-      billStock.getKeys();
-    return { ...billStockKeys, ...billStock.getData() };
-  });
+  return openBillStocks;
 }
 
-async function GetBillAssumptionValues(keys) {
-  const billAssumption = await this.billAssumptionRepo.get(keys);
-  if (!billAssumption) return undefined;
-  const { machineId, serviceKey, ...billAssumptionKeys } =
-    billAssumption.getKeys();
-  return {
-    ...billAssumptionKeys,
-    ...billAssumption.getData(),
-  };
+function FilterEntityData(entity) {
+  const { serviceKey, machineId, ...keys } = entity.getKeys();
+  const { send, ...data } = entity.getData();
+  return { ...keys, ...data };
 }
 
 async function GetBillingData(machineId) {
   const keys = { machineId, serviceKey: SERVICE_KEY };
-  const transactions = await GetOpenTransactionValues.call(
-    this,
-    keys
-  );
-  const billStock = await GetOpenBillStockValues.call(this, keys);
-  const billAssumption = await GetBillAssumptionValues.call(
-    this,
-    keys
-  );
+  const billStock = await GetOpenBillStocks.call(this, keys);
 
-  return {
+  if (billStock.length === 0)
+    throw new Error('No bill stock data available.');
+
+  const transactions = await GetOpenTransactions.call(this, keys);
+
+  const billingData = {
     transactions,
-    cashQuantities: [...billStock, billAssumption],
+    cashQuantities: billStock,
   };
+
+  const billAssumption = await this.billAssumptionRepo.get(keys);
+
+  if (billAssumption) billingData.cashQuantities.push(billAssumption);
+
+  return billingData;
 }
 
 async function GetBillTakingData(machineId) {
-  const keys = { machineId, serviceKey: SERVICE_KEY };
-  const billTakings = await this.billTakingRepo.get(keys);
-  if (!billTakings) return undefined;
+  const queryData = { machineId, serviceKey: SERVICE_KEY };
+  const billTaking = await this.billTakingRepo.get(queryData);
+
+  if (!billTaking) return undefined;
+
+  const billTakingData = FilterEntityData(billTaking);
   return {
-    ...billTakings.getKeys(),
-    ...billTakings.getData(),
+    cashQuantities: [
+      {
+        ...billTakingData,
+      },
+    ],
   };
 }
 

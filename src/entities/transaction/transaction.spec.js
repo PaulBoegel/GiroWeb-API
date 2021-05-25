@@ -39,12 +39,12 @@ describe('transaction', () => {
       'Transaction must have an amount.'
     );
   });
-  it('must have a transaction count', async () => {
+  it('must have a transaction counter', async () => {
     const transaction = makeFakeTransaction({
-      transactionCount: null,
+      transactionCounter: null,
     });
     expect(() => createTransaction(transaction)).to.throw(
-      'Transaction must have a transaction count.'
+      'Transaction must have a transaction counter.'
     );
   });
   it('must have a date with DD.MM.YYYY format', async () => {
@@ -57,11 +57,13 @@ describe('transaction', () => {
     );
     expect(() => createTransaction(rightTransaction)).not.throw();
   });
-  it('must have a time with HH:mm format', async () => {
+  it('must have a time with HH:mm:ss format', async () => {
     const badTransaction = makeFakeTransaction({ time: '10-45' });
-    const rightTransaction = makeFakeTransaction({ time: '18:40' });
+    const rightTransaction = makeFakeTransaction({
+      time: '18:40:55',
+    });
     expect(() => createTransaction(badTransaction)).to.throw(
-      'Time format is not HH:mm.'
+      'Time format is not HH:mm:ss.'
     );
     expect(() => createTransaction(rightTransaction)).not.throw();
   });

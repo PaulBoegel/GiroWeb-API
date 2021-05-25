@@ -1,21 +1,19 @@
-require('dotenv').config();
-const loggerConfig = require('./logger-config');
-const logger = require('./logger/createWinston')(loggerConfig);
+const { processenv } = require('processenv');
 const jwt = require('jsonwebtoken');
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const ServiceFactory = require('./serviceFactory');
 const CardServiceRouter = require('./router/cardServiceRouter');
 const AuthenticationRouter = require('./router/authenticationRouter');
-const CardServiceController = require('./controller/cardServiceController');
 const AuthenticationController = require('./controller/authenticationController');
 const AuthRepository = require('./repositories/authRepository');
 const AuthMiddleware = require('./middleware/authMiddleware');
-const TransactionRepository = require('./repositories/transactionRepository');
-const BillStockRepository = require('./repositories/billStockRepository');
-const BillAssumptionRepository = require('./repositories/billAssumptionRepository');
-const BillTakingRepository = require('./repositories/billTakingRepository');
+const cardService = require('./controller/card-service');
+const createCallback = require('./express-callback');
+const loggerConfig = require('./logger-config');
+const logger = require('./logger/createWinston')(loggerConfig);
+
+const apiRoot = processenv('API_ROOT') || 'api';
 
 process.on('uncaughtException', (err) => {
   logger.error(err.stack, () => {
@@ -24,22 +22,15 @@ process.on('uncaughtException', (err) => {
 });
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = processenv('PORT') || 3000;
+const isAuthActive = processenv('AUTHENTICATION');
 
 app.use(cors());
 app.use(bodyParser.raw());
 app.use(bodyParser.json());
 
-const serviceRepos = {
-  transRepo: TransactionRepository(),
-  billStockRepo: BillStockRepository(),
-  billTakingRepo: BillTakingRepository(),
-  billAssumptionRepo: BillAssumptionRepository(),
-};
-const serviceFactory = new ServiceFactory(serviceRepos);
-
 const authRepository = AuthRepository();
-const authMiddleware = AuthMiddleware(jwt);
+const authMiddleware = AuthMiddleware(jwt, isAuthActive);
 
 const authenticationController = new AuthenticationController({
   jwt,
@@ -50,17 +41,15 @@ const authenticationRouter = new AuthenticationRouter(
   authenticationController
 );
 
-const cardServiceController = new CardServiceController(
-  serviceFactory
-);
 const cardServiceRouter = new CardServiceRouter(
   express.Router(),
   authMiddleware,
-  cardServiceController
+  cardService,
+  createCallback
 );
 
-app.use('/api', authenticationRouter);
-app.use('/api', cardServiceRouter);
+app.use(`/${apiRoot}`, authenticationRouter);
+app.use(`/${apiRoot}`, cardServiceRouter);
 
 app.listen(port, () => {
   console.log(`GiroWeb Rest API listening on Port ${port}`);

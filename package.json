@@ -25,6 +25,7 @@
     "jsonwebtoken": "^8.5.1",
     "mongodb": "^3.6.2",
     "nyc": "^15.1.0",
+    "processenv": "^3.0.5",
     "winston": "^3.3.3"
   },
   "devDependencies": {
@@ -48,7 +49,18 @@
     "delay": "2500",
     "env": {
       "NODE_ENV": "development",
-      "PORT": 4000
+      "PORT": 4000,
+      "AUTHENTICATION": false,
+      "DB_HOST": "localhost",
+      "DB_PORT": 27017,
+      "DB_NAME": "gwServiceDB_Tests",
+      "DB_POOL_SIZE": 100,
+      "REQUEST_TIMEOUT": 5000,
+      "HELLO_TESS": {
+        "URL": "gwn.staging.hellotess.com",
+        "PATH": "/cardServices/loadExternalData",
+        "HTTPS": false
+      }
     }
   }
 }

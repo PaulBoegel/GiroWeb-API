@@ -1,29 +1,32 @@
 const { expect } = require('chai');
-const createSaveTransaction = require('./saveTransaction');
+const {
+  createCashQuantity,
+} = require('../../entities/cash-quantity');
+const createFakeCashQuantity = require('../../../__test__/fixtures/cashQuantity');
+const createSendBillTaking = require('./sendBillTaking');
 
-describe('saveTransaction', () => {
+describe('sendBillTaking', () => {
   let createService;
   beforeEach(() => {
     createService = () => {
       return {
-        SaveTransaction: async () => {
+        SaveBillTaking: async () => {
           return {
             getKeys: () => {},
             getData: () => {},
           };
         },
-        IncreaseBillAssumption: async () => {},
       };
     };
   });
 
   it('should be a function', async () => {
-    const SaveTransaction = createSaveTransaction({ createService });
-    expect(SaveTransaction).to.be.a('function');
+    const SendBillTaking = createSendBillTaking({ createService });
+    expect(SendBillTaking).to.be.a('function');
   });
 
   it('should return a response object, with header, body and status code property', async () => {
-    const SaveTransaction = createSaveTransaction({
+    const SendBillTaking = createSendBillTaking({
       createService,
     });
     const request = {
@@ -31,7 +34,7 @@ describe('saveTransaction', () => {
         serviceKey: 'Test',
       },
     };
-    const result = await SaveTransaction(request);
+    const result = await SendBillTaking(request);
     expect(result).to.be.an('object');
     expect(result.headers).to.be.an('object');
     expect(result.body).to.be.an('object');
@@ -39,27 +42,29 @@ describe('saveTransaction', () => {
   });
 
   it('should return status code 200 if the request was right', async () => {
-    const SaveTransaction = createSaveTransaction({
+    const SendBillTaking = createSendBillTaking({
       createService,
     });
     const request = {
       body: {
         serviceKey: 'Test',
+        machineId: 100,
+        cashQuantities: [createFakeCashQuantity({})],
       },
     };
-    const result = await SaveTransaction(request);
+    const result = await SendBillTaking(request);
     expect(result.statusCode).eql(200);
   });
 
   it('should return a response object, with header, body and status code if an error occurred', async () => {
     createService = () => {
       return {
-        saveTransaction: async () => {
+        GetBillTakingData: async () => {
           throw new Error('Transaction Error');
         },
       };
     };
-    const saveTransaction = createSaveTransaction({
+    const saveTransaction = createSendBillTaking({
       createService,
     });
     const request = {

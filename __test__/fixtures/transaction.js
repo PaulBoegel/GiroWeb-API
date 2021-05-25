@@ -5,9 +5,9 @@ function createFakeTransaction(overrides) {
     cardId: 1,
     paymentType: 'cash',
     amount: 500,
-    transactionCount: 1,
+    transactionCounter: 1,
     date: '18.05.2021',
-    time: '10:43',
+    time: '10:43:55',
     send: false,
   };
 

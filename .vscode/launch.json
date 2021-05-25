@@ -17,32 +17,19 @@
       "program": "${workspaceFolder}/src/server.js"
     },
     {
+      "name": "Tests",
       "type": "node",
       "request": "launch",
-      "name": "Test API",
-      "runtimeExecutable": "nodemon",
-      "runtimeArgs": ["--inspect"],
-      "skipFiles": ["<node_internals>/**"],
-      "restart": true,
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "program": "${workspaceFolder}/test/testAPI.js"
-    },
-    {
       "args": [
         "-u",
         "bdd",
         "--timeout",
         "999999",
         "--colors",
-        "${workspaceFolder}/src/**/*.spec.js"
+        "'${workspaceFolder}/src/**/*.spec.js'"
       ],
       "internalConsoleOptions": "openOnSessionStart",
-      "name": "Tests",
-      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
-      "request": "launch",
-      "skipFiles": ["<node_internals>/**"],
-      "type": "pwa-node"
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha"
     }
   ]
 }

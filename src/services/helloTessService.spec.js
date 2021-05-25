@@ -91,6 +91,18 @@ describe('helloTessService', () => {
       expect(firstDetailEntry.quantity).eq(1);
     });
 
+    it('should update the assumption data with every new transaction', async () => {
+      const transaction = makeFakeTransaction({});
+      const service = createService('helloTess');
+      await service.IncreaseBillAssumption(transaction);
+      const result = await service.IncreaseBillAssumption(
+        transaction
+      );
+      const firstEntry = result.getDetailEntry(0);
+      expect(firstEntry.total).eq(1000);
+      expect(firstEntry.quantity).eq(2);
+    });
+
     it('should throw an error if no transaction data passed.', async () => {
       const service = createService('helloTess');
       await expect(
@@ -162,7 +174,7 @@ describe('helloTessService', () => {
   });
 
   describe('GetBillingData', () => {
-    it('should return an object with transaction, bill stock and assumption data', async () => {
+    it('should return an object with transaction entities', async () => {
       const transactionData = makeFakeTransaction({
         serviceKey: 'HelloTess',
         machineId: 100,
@@ -183,31 +195,54 @@ describe('helloTessService', () => {
       const service = createService('helloTess');
       const billingData = await service.GetBillingData(100);
 
-      expect(billingData.transactions[0]).to.have.any.keys(
-        'cardId',
-        'paymentType',
-        'date',
-        'time'
-      );
+      billingData.transactions.forEach((entity) => {
+        expect(entity.getKeys).to.be.a('function');
+        expect(entity.getData).to.be.a('function');
+      });
+      billingData.cashQuantities.forEach((entity) => {
+        expect(entity.getKeys).to.be.a('function');
+        expect(entity.getData).to.be.a('function');
+        expect(entity.getDetailEntry).to.be.a('function');
+      });
+    });
 
-      expect(billingData.transactions[0]).to.not.have.any.keys(
-        'machineId',
-        'serviceKey'
-      );
+    it('should throw an error if no stack data is available', async () => {
+      const transactionData = makeFakeTransaction({
+        serviceKey: 'HelloTess',
+        machineId: 100,
+      });
 
-      for (let i = 0; i < 2; i += 1) {
-        expect(billingData.cashQuantities[i]).to.have.any.keys(
-          'date',
-          'time',
-          'paymentType',
-          'type',
-          'detail'
-        );
-        expect(billingData.cashQuantities[i]).to.not.have.any.keys(
-          'machineId',
-          'serviceKey'
-        );
-      }
+      const transRepo = TransactionRepository({ makeDb });
+      await transRepo.add(transactionData);
+
+      const service = createService('helloTess');
+      await expect(service.GetBillingData(100)).to.be.rejectedWith(
+        'No bill stock data available.'
+      );
+    });
+
+    it('should return billing data without bill assumption, if no assumption was created', async () => {
+      const transactionData = makeFakeTransaction({
+        serviceKey: 'HelloTess',
+        machineId: 100,
+      });
+
+      const billStockData = makeFakeCashQuantity({
+        serviceKey: 'HelloTess',
+        machineId: 100,
+        type: 'bill stock',
+      });
+
+      const transRepo = TransactionRepository({ makeDb });
+      const billStockRepo = BillStockRepository({ makeDb });
+
+      await transRepo.add(transactionData);
+      await billStockRepo.add(billStockData);
+
+      const service = createService('helloTess');
+      const billingData = await service.GetBillingData(100);
+
+      expect(billingData.cashQuantities.length).eq(1);
     });
     afterEach(async () => {
       await clearDb();

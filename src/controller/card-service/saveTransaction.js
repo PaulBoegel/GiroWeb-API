@@ -5,14 +5,20 @@ module.exports = function createSaveTransaction({ createService }) {
     };
     try {
       const { serviceKey } = request.body;
-      const transaction = await createService(
-        serviceKey
-      ).saveTransaction(request.body);
+      const service = await createService(serviceKey);
+      const transaction = await service.SaveTransaction(request.body);
+
+      await service.IncreaseBillAssumption({
+        ...transaction.getKeys(),
+        ...transaction.getData(),
+      });
+
       return {
         headers,
         statusCode: 200,
         body: {
-          transaction,
+          ...transaction.getKeys(),
+          ...transaction.getData(),
         },
       };
     } catch (error) {

@@ -3,7 +3,7 @@ function createFakeCashQuantity(overrides) {
     machineId: 100,
     serviceKey: 'test',
     date: '18.05.2021',
-    time: '10:43',
+    time: '10:43:55',
     paymentType: 'cash',
     type: 'bill assumption',
     total: 500,
